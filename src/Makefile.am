@@ -1,5 +1,5 @@
 
-INCLUDES	= @GLIB_CFLAGS@ -I$(top_srcdir)/include
+INCLUDES	= @GLIB_CFLAGS@ -I$(top_srcdir)/include -I$(top_srcdir)/polarssl/include
 
 bin_PROGRAMS	= brd picocoin blkscan
 
@@ -13,7 +13,7 @@ brd_SOURCES=		\
 	brd.c		\
 	brd.h
 
-brd_LDADD	= libnode.a ../lib/libccoin.a \
+brd_LDADD	= libnode.a ../lib/libccoin.a $(top_srcdir)/polarssl/library/libpolarssl.a \
 		  @GLIB_LIBS@ @CRYPTO_LIBS@ @EVENT_LIBS@
 
 picocoin_SOURCES=	\
@@ -24,8 +24,8 @@ picocoin_SOURCES=	\
 	picocoin.h	\
 	wallet.c wallet.h
 
-picocoin_LDADD	= libnode.a ../lib/libccoin.a \
+picocoin_LDADD	= libnode.a ../lib/libccoin.a $(top_srcdir)/polarssl/library/libpolarssl.a \
 		  @GLIB_LIBS@ @CRYPTO_LIBS@ @EVENT_LIBS@ @JANSSON_LIBS@
 
-blkscan_LDADD	= ../lib/libccoin.a \
+blkscan_LDADD	= ../lib/libccoin.a $(top_srcdir)/polarssl/library/libpolarssl.a \
 		  @GLIB_LIBS@ @CRYPTO_LIBS@
