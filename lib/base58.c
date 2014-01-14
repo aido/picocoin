@@ -6,46 +6,40 @@
 
 #include <ctype.h>
 #include <string.h>
-#include <openssl/bn.h>
 #include <glib.h>
 #include <ccoin/util.h>
 
 static const char base58_chars[] =
 	"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
+// Encode a byte sequence as a base58-encoded string
 GString *base58_encode(const void *data_, size_t data_len)
 {
 	const unsigned char *data = data_;
-	BIGNUM bn58, bn0, bn, dv, rem;
-	BN_CTX *ctx;
+	t_uint c;
+	mpi bn;
 
-	ctx = BN_CTX_new();
-	BN_init(&bn58);
-	BN_init(&bn0);
-	BN_init(&bn);
-	BN_init(&dv);
-	BN_init(&rem);
-
-	BN_set_word(&bn58, 58);
-	BN_set_word(&bn0, 0);
-
-	unsigned char swapbuf[data_len + 1];
-	bu_reverse_copy(swapbuf, data, data_len);
-	swapbuf[data_len] = 0;
-
-	bn_setvch(&bn, swapbuf, sizeof(swapbuf));
-
+	// Convert mpi to base58 string
+	// Expected size increase from base58 conversion is approximately 137%
+	// use 138% to be safe
 	GString *rs = g_string_sized_new(data_len * 138 / 100 + 1);
 
-	while (BN_cmp(&bn, &bn0) > 0) {
-		if (!BN_div(&dv, &rem, &bn, &bn58, ctx))
-			goto err_out;
-		BN_copy(&bn, &dv);
+	// Convert data to mpi
+        mpi_init(&bn);
+	
+	if (!(mpi_read_binary(&bn, data, data_len) == 0))
+		goto err_out;
+	
+	while (mpi_cmp_int(&bn, 0) > 0) {
+                if (!(mpi_mod_int(&c, &bn, 58) == 0))
+                        goto err_out;
+                g_string_append_c(rs, base58_chars[c]);
 
-		unsigned int c = BN_get_word(&rem);
-		g_string_append_c(rs, base58_chars[c]);
+		if (!(mpi_div_int(&bn, NULL, &bn, 58) == 0))
+			goto err_out;
 	}
 
+	// Leading zeroes encoded as base58 zeros
 	unsigned int i;
 	for (i = 0; i < data_len; i++) {
 		if (data[i] == 0)
@@ -54,6 +48,7 @@ GString *base58_encode(const void *data_, size_t data_len)
 			break;
 	}
 
+	// Convert little endian string to big endian
 	GString *rs_swap = g_string_sized_new(rs->len);
 	g_string_set_size(rs_swap, rs->len);
 	bu_reverse_copy((unsigned char *) rs_swap->str,
@@ -63,12 +58,7 @@ GString *base58_encode(const void *data_, size_t data_len)
 	rs = rs_swap;
 
 out:
-	BN_clear_free(&bn58);
-	BN_clear_free(&bn0);
-	BN_clear_free(&bn);
-	BN_clear_free(&dv);
-	BN_clear_free(&rem);
-	BN_CTX_free(ctx);
+	mpi_free(&bn);
 
 	return rs;
 
@@ -99,72 +89,57 @@ GString *base58_encode_check(unsigned char addrtype, bool have_addrtype,
 	return s_enc;
 }
 
+// Decode a base58-encoded string
 GString *base58_decode(const char *s_in)
 {
-	BIGNUM bn58, bn, bnChar;
-	BN_CTX *ctx;
+	mpi bn;
 	GString *ret = NULL;
 
-	ctx = BN_CTX_new();
-	BN_init(&bn58);
-	BN_init(&bn);
-	BN_init(&bnChar);
-
-	BN_set_word(&bn58, 58);
-	BN_set_word(&bn, 0);
+	mpi_init(&bn);
+	mpi_lset(&bn, 0);
 
 	while (isspace(*s_in))
 		s_in++;
 
+	// Convert big endian string to mpi
 	const char *p;
 	for (p = s_in; *p; p++) {
 		const char *p1 = strchr(base58_chars, *p);
 		if (!p1) {
 			while (isspace(*p))
 				p++;
-			if (*p != '\0')
-				goto out;
+			if (*p != '\0') {
+				mpi_free(&bn);
+				return ret;
+			}
 			break;
 		}
-
-		BN_set_word(&bnChar, p1 - base58_chars);
-
-		if (!BN_mul(&bn, &bn, &bn58, ctx))
-			goto out;
-
-		if (!BN_add(&bn, &bn, &bnChar))
-			goto out;
+		if (!(mpi_mul_int(&bn, &bn, 58) == 0)) {
+			mpi_free(&bn);
+			return ret;
+		}
+		if (!(mpi_add_int(&bn, &bn,  p1 - base58_chars) == 0)) {
+			mpi_free(&bn);
+			return ret;
+		}
 	}
 
-	GString *tmp = bn_getvch(&bn);
+	// Get mpi as big endian data
+	GString *tmp_be = g_string_sized_new(mpi_size(&bn));
+	g_string_set_size(tmp_be, mpi_size(&bn));
 
-	if ((tmp->len >= 2) &&
-	    (tmp->str[tmp->len - 1] == 0) &&
-	    ((unsigned char)tmp->str[tmp->len - 2] >= 0x80))
-		g_string_set_size(tmp, tmp->len - 1);
+	if (!(mpi_write_binary(&bn, (unsigned char *)tmp_be->str, mpi_size(&bn)) == 0))
+		goto out;
 
-	unsigned int leading_zero = 0;
+	// Restore leading zeros
 	for (p = s_in; *p == base58_chars[0]; p++)
-		leading_zero++;
-
-	unsigned int be_sz = tmp->len + leading_zero;
-	GString *tmp_be = g_string_sized_new(be_sz);
-	g_string_set_size(tmp_be, be_sz);
-	memset(tmp_be->str, 0, be_sz);
-
-	bu_reverse_copy((unsigned char *)tmp_be->str + leading_zero,
-			(unsigned char *)tmp->str, tmp->len);
-
-	g_string_free(tmp, TRUE);
+		g_string_prepend_c(tmp_be,0);
 
 	ret = tmp_be;
 
 out:
-	BN_clear_free(&bn58);
-	BN_clear_free(&bn);
-	BN_clear_free(&bnChar);
-	BN_CTX_free(ctx);
-	return ret;
+        mpi_free(&bn);
+        return ret;
 }
 
 GString *base58_decode_check(unsigned char *addrtype, const char *s_in)
@@ -197,4 +172,3 @@ err_out:
 	g_string_free(s, TRUE);
 	return NULL;
 }
-

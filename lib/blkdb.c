@@ -10,7 +10,6 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <string.h>
-#include <openssl/bn.h>
 #include <glib.h>
 #include <ccoin/blkdb.h>
 #include <ccoin/message.h>
@@ -25,7 +24,7 @@ struct blkinfo *bi_new(void)
 	struct blkinfo *bi;
 
 	bi = calloc(1, sizeof(*bi));
-	BN_init(&bi->work);
+	mpi_init(&bi->work);
 	bi->height = -1;
 	bi->n_file = -1;
 	bi->n_pos = -1LL;
@@ -40,7 +39,7 @@ void bi_free(struct blkinfo *bi)
 	if (!bi)
 		return;
 
-	BN_clear_free(&bi->work);
+	mpi_free(&bi->work);
 
 	bp_block_free(&bi->hdr);
 
@@ -73,8 +72,8 @@ static bool blkdb_connect(struct blkdb *db, struct blkinfo *bi,
 		return false;
 
 	bool rc = false;
-	BIGNUM cur_work;
-	BN_init(&cur_work);
+	mpi cur_work;
+	mpi_init(&cur_work);
 
 	u256_from_compact(&cur_work, bi->hdr.nBits);
 
@@ -88,7 +87,7 @@ static bool blkdb_connect(struct blkdb *db, struct blkinfo *bi,
 		/* bi->prev = NULL; */
 		bi->height = 0;
 
-		BN_copy(&bi->work, &cur_work);
+		mpi_copy(&bi->work, &cur_work);
 
 		best_chain = true;
 	}
@@ -102,10 +101,10 @@ static bool blkdb_connect(struct blkdb *db, struct blkinfo *bi,
 		bi->prev = prev;
 		bi->height = prev->height + 1;
 
-		if (!BN_add(&bi->work, &cur_work, &prev->work))
+		if (!(mpi_add_mpi(&bi->work, &cur_work, &prev->work) == 0))
 			goto out;
 
-		if (BN_cmp(&bi->work, &db->best_chain->work) > 0)
+		if (mpi_cmp_mpi(&bi->work, &db->best_chain->work) > 0)
 			best_chain = true;
 	}
 
@@ -156,7 +155,7 @@ static bool blkdb_connect(struct blkdb *db, struct blkinfo *bi,
 	rc = true;
 
 out:
-	BN_clear_free(&cur_work);
+	mpi_free(&cur_work);
 	return rc;
 }
 

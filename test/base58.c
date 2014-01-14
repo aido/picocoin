@@ -19,7 +19,6 @@ static void test_encode(const char *hexstr, const char *enc)
 	size_t hs_len = strlen(hexstr) / 2;
 	unsigned char *raw = calloc(1, hs_len);
 	size_t out_len;
-
 	bool rc = decode_hex(raw, hs_len, hexstr, &out_len);
 	if (!rc) {
 		fprintf(stderr, "raw %p, sizeof(raw) %lu, hexstr %p %s\n",
@@ -33,7 +32,6 @@ static void test_encode(const char *hexstr, const char *enc)
 			s->str, enc);
 		assert(!strcmp(s->str, enc));
 	}
-
 	free(raw);
 	g_string_free(s, TRUE);
 }
@@ -97,7 +95,6 @@ static void runtest_encdec(const char *base_fn)
 		test_decode(json_string_value(j_raw),
 			    json_string_value(j_enc));
 	}
-
 	free(fn);
 	json_decref(data);
 }

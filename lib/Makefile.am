@@ -1,5 +1,5 @@
 
-INCLUDES	= @GLIB_CFLAGS@ -I$(top_srcdir)/include
+INCLUDES	= @GLIB_CFLAGS@ -I$(top_srcdir)/include -I$(top_srcdir)/polarssl/include
 
 noinst_LIBRARIES= libccoin.a
 

@@ -79,7 +79,6 @@ static void test_tx_valid(bool is_valid, GHashTable *input_map,
 				 */
 				continue;
 			}
-
 			char tx_hexstr[BU256_STRSZ], hexstr[BU256_STRSZ];
 			bu256_hex(tx_hexstr, &tx.sha256);
 			bu256_hex(hexstr, &txin->prevout.hash);
@@ -88,10 +87,8 @@ static void test_tx_valid(bool is_valid, GHashTable *input_map,
 			"tx-valid: TX %s\n"
 			"tx-valid: prevout (%s, %u) not found\n",
 				tx_hexstr, hexstr, txin->prevout.n);
-
 			assert(scriptPubKey != NULL);
 		}
-
 		bool rc = bp_script_verify(txin->scriptSig, scriptPubKey,
 					&tx, i,
 					enforce_p2sh ? SCRIPT_VERIFY_P2SH :
@@ -104,7 +101,6 @@ static void test_tx_valid(bool is_valid, GHashTable *input_map,
 			"tx-valid: TX %s\n"
 			"tx-valid: txin %u script verification failed\n",
 				tx_hexstr, i);
-
 			assert(rc == is_valid);
 		}
 	}

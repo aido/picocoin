@@ -7,7 +7,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <openssl/bn.h>
 #include <glib.h>
 #include <ccoin/buffer.h>
 #include <ccoin/buint.h>
@@ -60,6 +59,6 @@ static inline bool deser_s64(int64_t *vo, struct const_buffer *buf)
 
 extern bool deser_u256_array(GPtrArray **ao, struct const_buffer *buf);
 
-extern void u256_from_compact(BIGNUM *vo, uint32_t c);
+extern void u256_from_compact(mpi *vo, uint32_t c);
 
 #endif /* __LIBCCOIN_SERIALIZE_H__ */

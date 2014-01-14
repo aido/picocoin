@@ -63,7 +63,6 @@ static void runtest(const char *json_fn_base, const char *ser_fn_base)
 			hashstr, hexstr);
 		assert(!strcmp(hexstr, hashstr));
 	}
-
 	assert(tx.vin->len == 1);
 	assert(tx.vout->len == 2);
 

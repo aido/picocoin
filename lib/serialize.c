@@ -8,7 +8,6 @@
 #include <string.h>
 #include <glib.h>
 #include <openssl/sha.h>
-#include <openssl/bn.h>
 #include <ccoin/serialize.h>
 #include <ccoin/util.h>
 #include <ccoin/compat.h>
@@ -266,12 +265,12 @@ err_out:
 	return false;
 }
 
-void u256_from_compact(BIGNUM *vo, uint32_t c)
+void u256_from_compact(mpi *vo, uint32_t c)
 {
 	uint32_t nbytes = (c >> 24) & 0xFF;
 	uint32_t cv = c & 0xFFFFFF;
 
-	BN_set_word(vo, cv);
-	BN_lshift(vo, vo, (8 * (nbytes - 3)));
+	mpi_lset(vo, cv);
+	mpi_shift_l(vo, (8 * (nbytes - 3)));
 }
 

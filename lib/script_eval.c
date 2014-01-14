@@ -150,38 +150,31 @@ static const unsigned char disabled_op[256] = {
 	[OP_RSHIFT] = 1,
 };
 
-static bool CastToBigNum(BIGNUM *vo, const struct buffer *buf)
+static bool CastToBigNum(mpi *vo, const struct buffer *buf)
 {
 	if (buf->len > nMaxNumSize)
 		return false;
 
-	// Get rid of extra leading zeros:
-	// buf -> bn -> buf -> bn
+	bn_setvch(vo, buf->p, buf->len);
 
-	BIGNUM bn;
-	BN_init(&bn);
-
-	bn_setvch(&bn, buf->p, buf->len);
-	GString *bn_s = bn_getvch(&bn);
-
-	bn_setvch(vo, bn_s->str, bn_s->len);
-
-	g_string_free(bn_s, TRUE);
-	BN_clear_free(&bn);
 	return true;
 }
 
 static bool CastToBool(const struct buffer *buf)
 {
 	unsigned int i;
+	unsigned char testchar;
 	const unsigned char *vch = buf->p;
+
 	for (i = 0; i < buf->len; i++) {
-		if (vch[i] != 0) {
-			// Can be negative zero
-			if (i == (buf->len - 1) && vch[i] == 0x80)
-				return false;
+		testchar = vch[i];
+
+		/* turn off sign bit */
+		if (i == 0 && testchar & 0x80)
+			testchar &= 0x7F;
+
+		if (testchar != 0)
 			return true;
-		}
 	}
 
 	return false;
@@ -232,24 +225,22 @@ static struct buffer *stacktop(GPtrArray *stack, int index)
 static int stackint(GPtrArray *stack, int index)
 {
 	struct buffer *buf = stacktop(stack, index);
-	BIGNUM bn;
-	BN_init(&bn);
-
-	int ret = -1;
+	mpi bn;
+	mpi_init(&bn);
 
 	if (!CastToBigNum(&bn, buf))
 		goto out;
 
-	if (!BN_is_negative(&bn))
-		ret = BN_get_word(&bn);
-	else {
-		BN_set_negative(&bn, 0);
-		ret = BN_get_word(&bn);
-		ret = -ret;
-	}
+	size_t len =0;
+	char *strbuf = NULL;
+
+	mpi_write_string(&bn, 16, NULL, &len);
+	strbuf = malloc(len);
+	mpi_write_string(&bn, 16, strbuf, &len);
+	intmax_t ret = strtoimax(strbuf, NULL, 16);
 
 out:
-	BN_clear_free(&bn);
+	mpi_free(&bn);
 	return ret;
 }
 
@@ -283,16 +274,6 @@ static unsigned int count_false(GByteArray *vfExec)
 			count++;
 
 	return count;
-}
-
-static void bn_set_int(BIGNUM *n, int val)
-{
-	if (val >= 0)
-		BN_set_word(n, val);
-	else {
-		BN_set_word(n, -val);
-		BN_set_negative(n, 1);
-	}
 }
 
 static bool bp_checksig(const struct buffer *vchSigHT,
@@ -357,8 +338,8 @@ static bool bp_script_eval(GPtrArray *stack, const GString *script,
 	bool rc = false;
 	GByteArray *vfExec = g_byte_array_new();
 	GPtrArray *altstack = g_ptr_array_new_with_free_func(g_buffer_free);
-	BIGNUM bn;
-	BN_init(&bn);
+	mpi bn;
+	mpi_init(&bn);
 
 	if (script->len > 10000)
 		goto out;
@@ -408,7 +389,7 @@ static bool bp_script_eval(GPtrArray *stack, const GString *script,
 		case OP_14:
 		case OP_15:
 		case OP_16:
-			bn_set_int(&bn, (int)opcode - (int)(OP_1 - 1));
+			mpi_lset(&bn, (int)opcode - (int)(OP_1 - 1));
 			stack_push_str(stack, bn_getvch(&bn));
 			break;
 
@@ -416,10 +397,16 @@ static bool bp_script_eval(GPtrArray *stack, const GString *script,
 		// Control
 		//
 		case OP_NOP:
-		case OP_NOP1: case OP_NOP2: case OP_NOP3: case OP_NOP4: case
-OP_NOP5:
-		case OP_NOP6: case OP_NOP7: case OP_NOP8: case OP_NOP9: case
-OP_NOP10:
+		case OP_NOP1:
+		case OP_NOP2:
+		case OP_NOP3:
+		case OP_NOP4:
+		case OP_NOP5:
+		case OP_NOP6:
+		case OP_NOP7:
+		case OP_NOP8:
+		case OP_NOP9:
+		case OP_NOP10:
 			break;
 
 		case OP_IF:
@@ -560,7 +547,7 @@ OP_NOP10:
 
 		case OP_DEPTH:
 			// -- stacksize
-			BN_set_word(&bn, stack->len);
+			mpi_lset(&bn, stack->len);
 			stack_push_str(stack, bn_getvch(&bn));
 			break;
 
@@ -650,11 +637,10 @@ OP_NOP10:
 			if (stack->len < 1)
 				goto out;
 			struct buffer *vch = stacktop(stack, -1);
-			BN_set_word(&bn, vch->len);
+			mpi_lset(&bn, vch->len);
 			stack_push_str(stack, bn_getvch(&bn));
 			break;
 		}
-
 
 		case OP_EQUAL:
 		case OP_EQUALVERIFY: {
@@ -663,6 +649,7 @@ OP_NOP10:
 				goto out;
 			struct buffer *vch1 = stacktop(stack, -2);
 			struct buffer *vch2 = stacktop(stack, -1);
+
 			bool fEqual = ((vch1->len == vch2->len) &&
 				      memcmp(vch1->p, vch2->p, vch1->len) == 0);
 			// OP_NOTEQUAL is disabled because it would be too easy to say
@@ -699,23 +686,23 @@ OP_NOP10:
 			switch (opcode)
 			{
 			case OP_1ADD:
-				BN_add_word(&bn, 1);
+				mpi_add_int(&bn, &bn, 1);
 				break;
 			case OP_1SUB:
-				BN_sub_word(&bn, 1);
+				mpi_sub_int(&bn, &bn, 1);
 				break;
 			case OP_NEGATE:
-				BN_set_negative(&bn, !BN_is_negative(&bn));
+				bn.s = mpi_cmp_int(&bn, 0) > 0 ? -1 : 1;
 				break;
 			case OP_ABS:
-				if (BN_is_negative(&bn))
-					BN_set_negative(&bn, 0);
+				if (mpi_cmp_int(&bn, 0) < 0)
+					bn.s = 1;
 				break;
 			case OP_NOT:
-				BN_set_word(&bn, BN_is_zero(&bn) ? 1 : 0);
-				break;
+				mpi_lset(&bn, mpi_cmp_int(&bn, 0) == 0  ? 1 : 0);
+ 				break;
 			case OP_0NOTEQUAL:
-				BN_set_word(&bn, BN_is_zero(&bn) ? 0 : 1);
+				mpi_lset(&bn, mpi_cmp_int(&bn, 0) == 0  ? 0 : 1);
 				break;
 			default:
 				// impossible
@@ -743,70 +730,71 @@ OP_NOP10:
 			if (stack->len < 2)
 				goto out;
 
-			BIGNUM bn1, bn2;
-			BN_init(&bn1);
-			BN_init(&bn2);
+			mpi bn1, bn2;
+			mpi_init(&bn1);
+			mpi_init(&bn2);
+
 			if (!CastToBigNum(&bn1, stacktop(stack, -2)) ||
 			    !CastToBigNum(&bn2, stacktop(stack, -1))) {
-				BN_clear_free(&bn1);
-				BN_clear_free(&bn2);
+				mpi_free(&bn1);
+				mpi_free(&bn2);
+
 				goto out;
 			}
-
 			switch (opcode)
 			{
 			case OP_ADD:
-				BN_add(&bn, &bn1, &bn2);
+				mpi_add_mpi(&bn, &bn1, &bn2);
 				break;
 			case OP_SUB:
-				BN_sub(&bn, &bn1, &bn2);
+				mpi_sub_mpi(&bn, &bn1, &bn2);
 				break;
 			case OP_BOOLAND:
-				BN_set_word(&bn,
-				    (!BN_is_zero(&bn1) && !BN_is_zero(&bn2)) ?
-				    1 : 0);
+					mpi_lset(&bn,
+						(!(mpi_cmp_int(&bn1, 0) == 0) && !(mpi_cmp_int(&bn2, 0) == 0)) ?
+						1 : 0);
 				break;
 			case OP_BOOLOR:
-				BN_set_word(&bn,
-				    (!BN_is_zero(&bn1) || !BN_is_zero(&bn2)) ?
-				    1 : 0);
+				mpi_lset(&bn,
+					(!(mpi_cmp_int(&bn1, 0) == 0) || !(mpi_cmp_int(&bn2, 0) == 0)) ?
+					1 : 0);
 				break;
 			case OP_NUMEQUAL:
 			case OP_NUMEQUALVERIFY:
-				BN_set_word(&bn,
-				    (BN_cmp(&bn1, &bn2) == 0) ?  1 : 0);
+				mpi_lset(&bn,
+					(mpi_cmp_mpi(&bn1, &bn2) == 0) ?  1 : 0);
 				break;
 			case OP_NUMNOTEQUAL:
-				BN_set_word(&bn,
-				    (BN_cmp(&bn1, &bn2) != 0) ?  1 : 0);
+				mpi_lset(&bn,
+					(mpi_cmp_mpi(&bn1, &bn2) != 0) ?  1 : 0);
 				break;
 			case OP_LESSTHAN:
-				BN_set_word(&bn,
-				    (BN_cmp(&bn1, &bn2) < 0) ?  1 : 0);
+				mpi_lset(&bn,
+					(mpi_cmp_mpi(&bn1, &bn2) < 0) ?  1 : 0);
 				break;
 			case OP_GREATERTHAN:
-				BN_set_word(&bn,
-				    (BN_cmp(&bn1, &bn2) > 0) ?  1 : 0);
+				mpi_lset(&bn,
+					(mpi_cmp_mpi(&bn1, &bn2) > 0) ?  1 : 0);
 				break;
 			case OP_LESSTHANOREQUAL:
-				BN_set_word(&bn,
-				    (BN_cmp(&bn1, &bn2) <= 0) ?  1 : 0);
+				mpi_lset(&bn,
+					(mpi_cmp_mpi(&bn1, &bn2) <= 0) ?  1 : 0);
 				break;
 			case OP_GREATERTHANOREQUAL:
-				BN_set_word(&bn,
-				    (BN_cmp(&bn1, &bn2) >= 0) ?  1 : 0);
+				mpi_lset(&bn,
+					(mpi_cmp_mpi(&bn1, &bn2) >= 0) ?  1 : 0);
 				break;
 			case OP_MIN:
-				if (BN_cmp(&bn1, &bn2) < 0)
-					BN_copy(&bn, &bn1);
+				if (mpi_cmp_mpi(&bn1, &bn2) < 0)
+					mpi_copy(&bn, &bn1);
 				else
-					BN_copy(&bn, &bn2);
+					mpi_copy(&bn, &bn2);
 				break;
 			case OP_MAX:
-				if (BN_cmp(&bn1, &bn2) > 0)
-					BN_copy(&bn, &bn1);
+				if (mpi_cmp_mpi(&bn1, &bn2) > 0)
+					mpi_copy(&bn, &bn1);
 				else
-					BN_copy(&bn, &bn2);
+					mpi_copy(&bn, &bn2);
 				break;
 			default:
 				// impossible
@@ -815,8 +803,8 @@ OP_NOP10:
 			popstack(stack);
 			popstack(stack);
 			stack_push_str(stack, bn_getvch(&bn));
-			BN_clear_free(&bn1);
-			BN_clear_free(&bn2);
+			mpi_free(&bn1);
+			mpi_free(&bn2);
 
 			if (opcode == OP_NUMEQUALVERIFY)
 			{
@@ -832,22 +820,23 @@ OP_NOP10:
 			// (x min max -- out)
 			if (stack->len < 3)
 				goto out;
-			BIGNUM bn1, bn2, bn3;
-			BN_init(&bn1);
-			BN_init(&bn2);
-			BN_init(&bn3);
+			mpi bn1, bn2, bn3;
+			mpi_init(&bn1);
+			mpi_init(&bn2);
+			mpi_init(&bn3);
 			bool rc1 = CastToBigNum(&bn1, stacktop(stack, -3));
 			bool rc2 = CastToBigNum(&bn2, stacktop(stack, -2));
 			bool rc3 = CastToBigNum(&bn3, stacktop(stack, -1));
-			bool fValue = (BN_cmp(&bn2, &bn1) <= 0 &&
-				       BN_cmp(&bn1, &bn3) < 0);
+			bool fValue = (mpi_cmp_mpi(&bn2, &bn1) <= 0 &&
+						   mpi_cmp_mpi(&bn1, &bn3) < 0);
+
 			popstack(stack);
 			popstack(stack);
 			popstack(stack);
 			stack_push_char(stack, fValue ? 1 : 0);
-			BN_clear_free(&bn1);
-			BN_clear_free(&bn2);
-			BN_clear_free(&bn3);
+			mpi_free(&bn1);
+			mpi_free(&bn2);
+			mpi_free(&bn3);
 			if (!rc1 || !rc2 || !rc3)
 				goto out;
 			break;
@@ -1050,7 +1039,7 @@ OP_NOP10:
 	rc = (vfExec->len == 0 && bp.error == false);
 
 out:
-	BN_clear_free(&bn);
+	mpi_free(&bn);
 	g_ptr_array_free(altstack, TRUE);
 	g_byte_array_unref(vfExec);
 	return rc;
@@ -1139,4 +1128,3 @@ bool bp_verify_sig(const struct bp_utxo *txFrom, const struct bp_tx *txTo,
 	return bp_script_verify(txin->scriptSig, txout->scriptPubKey,
 				txTo, nIn, flags, nHashType);
 }
-

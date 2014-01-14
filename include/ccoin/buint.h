@@ -9,7 +9,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
-#include <openssl/bn.h>
+#include <polarssl/bignum.h>
 #include <glib.h>
 
 enum {
@@ -36,7 +36,7 @@ typedef struct bu256 {
 extern guint g_bu160_hash(gconstpointer key_);
 extern gboolean g_bu160_equal(gconstpointer a_, gconstpointer b_);
 
-extern void bu256_bn(BIGNUM *vo, const bu256_t *vi);
+extern void bu256_bn(mpi *vo, const bu256_t *vi);
 extern bool hex_bu256(bu256_t *vo, const char *hexstr);
 extern void bu256_hex(char *hexstr, const bu256_t *v);
 extern void bu256_swap(bu256_t *v);

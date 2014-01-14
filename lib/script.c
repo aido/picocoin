@@ -277,26 +277,27 @@ void bsp_push_int64(GString *s, int64_t n)
 		n = -n;
 	}
 
-	BIGNUM bn, bn_lo, bn_hi;
-	BN_init(&bn);
-	BN_init(&bn_hi);
-	BN_init(&bn_lo);
+	mpi bn, bn_lo, bn_hi;
+	mpi_init(&bn);
+	mpi_init(&bn_hi);
+	mpi_init(&bn_lo);
 
-	BN_set_word(&bn_hi, (n >> 32));
-	BN_lshift(&bn_hi, &bn_hi, 32);
-	BN_set_word(&bn_lo, (n & 0xffffffffU));
-	BN_add(&bn, &bn_hi, &bn_lo);
+	mpi_lset(&bn_hi, (n >> 32));
+	mpi_shift_l(&bn_hi, 32);
+	mpi_lset(&bn_lo, (n & 0xffffffffU));
+	mpi_add_mpi(&bn, &bn_hi, &bn_lo);
+
 	if (neg)
-		BN_set_negative(&bn, 1);
+		bn.s = -1;
 
 	GString *vch = bn_getvch(&bn);
 
 	bsp_push_data(s, vch->str, vch->len);
 
 	g_string_free(vch, TRUE);
-	BN_clear_free(&bn);
-	BN_clear_free(&bn_hi);
-	BN_clear_free(&bn_lo);
+	mpi_free(&bn);
+	mpi_free(&bn_hi);
+	mpi_free(&bn_lo);
 }
 
 void bsp_push_uint64(GString *s, uint64_t n)
@@ -307,23 +308,22 @@ void bsp_push_uint64(GString *s, uint64_t n)
 		return;
 	}
 
-	BIGNUM bn, bn_lo, bn_hi;
-	BN_init(&bn);
-	BN_init(&bn_hi);
-	BN_init(&bn_lo);
+	mpi bn, bn_lo, bn_hi;
+	mpi_init(&bn);
+	mpi_init(&bn_hi);
+	mpi_init(&bn_lo);
 
-	BN_set_word(&bn_hi, (n >> 32));
-	BN_lshift(&bn_hi, &bn_hi, 32);
-	BN_set_word(&bn_lo, (n & 0xffffffffU));
-	BN_add(&bn, &bn_hi, &bn_lo);
+	mpi_lset(&bn_hi, (n >> 32));
+	mpi_shift_l(&bn_hi, 32);
+	mpi_lset(&bn_lo, (n & 0xffffffffU));
+	mpi_add_mpi(&bn, &bn_hi, &bn_lo);
 
 	GString *vch = bn_getvch(&bn);
 
 	bsp_push_data(s, vch->str, vch->len);
 
 	g_string_free(vch, TRUE);
-	BN_clear_free(&bn);
-	BN_clear_free(&bn_hi);
-	BN_clear_free(&bn_lo);
+	mpi_free(&bn);
+	mpi_free(&bn_hi);
+	mpi_free(&bn_lo);
 }
-

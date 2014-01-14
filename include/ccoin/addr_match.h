@@ -7,17 +7,16 @@
 
 #include <stdbool.h>
 #include <glib.h>
-#include <openssl/bn.h>
 
 extern bool bp_txout_match(const struct bp_txout *txout,
 		    const struct bp_keyset *ks);
 extern bool bp_tx_match(const struct bp_tx *tx, const struct bp_keyset *ks);
-extern bool bp_tx_match_mask(BIGNUM *mask, const struct bp_tx *tx,
+extern bool bp_tx_match_mask(mpi *mask, const struct bp_tx *tx,
 		      const struct bp_keyset *ks);
 
 struct bp_block_match {
 	unsigned int	n;		/* block.vtx array index */
-	BIGNUM		mask;		/* bitmask of matched txout's */
+	mpi		mask;		/* bitmask of matched txout's */
 	bool		self_alloc;	/* alloc'd by bbm_new? */
 };
 

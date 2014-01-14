@@ -70,13 +70,13 @@ bool bp_tx_match(const struct bp_tx *tx, const struct bp_keyset *ks)
 	return false;
 }
 
-bool bp_tx_match_mask(BIGNUM *mask, const struct bp_tx *tx,
+bool bp_tx_match_mask(mpi *mask, const struct bp_tx *tx,
 		      const struct bp_keyset *ks)
 {
 	if (!tx || !tx->vout || !ks || !mask)
 		return false;
 
-	BN_zero(mask);
+	mpi_lset(mask, 0);
 
 	unsigned int i;
 	for (i = 0; i < tx->vout->len; i++) {
@@ -84,7 +84,7 @@ bool bp_tx_match_mask(BIGNUM *mask, const struct bp_tx *tx,
 
 		txout = g_ptr_array_index(tx->vout, i);
 		if (bp_txout_match(txout, ks))
-			BN_set_bit(mask, i);
+			mpi_set_bit(mask, i, 1);
 	}
 
 	return true;
@@ -94,7 +94,7 @@ void bbm_init(struct bp_block_match *match)
 {
 	memset(match, 0, sizeof(*match));
 
-	BN_init(&match->mask);
+	mpi_init(&match->mask);
 }
 
 struct bp_block_match *bbm_new(void)
@@ -114,7 +114,7 @@ void bbm_free(struct bp_block_match *match)
 	if (!match)
 		return;
 
-	BN_clear_free(&match->mask);
+	mpi_free(&match->mask);
 
 	if (match->self_alloc)
 		free(match);
@@ -131,8 +131,8 @@ GPtrArray *bp_block_match(const struct bp_block *block,
 	if (!arr)
 		return NULL;
 
-	BIGNUM tmp_mask;
-	BN_init(&tmp_mask);
+	mpi tmp_mask;
+	mpi_init(&tmp_mask);
 
 	unsigned int n;
 	for (n = 0; n < block->vtx->len; n++) {
@@ -142,22 +142,22 @@ GPtrArray *bp_block_match(const struct bp_block *block,
 		if (!bp_tx_match_mask(&tmp_mask, tx, ks))
 			goto err_out;
 
-		if (!BN_is_zero(&tmp_mask)) {
+		if (!(mpi_cmp_int(&tmp_mask, 0) == 0)) {
 			struct bp_block_match *match;
 
 			match = bbm_new();
 			match->n = n;
-			BN_copy(&match->mask, &tmp_mask);
+			mpi_copy(&match->mask, &tmp_mask);
 
 			g_ptr_array_add(arr, match);
 		}
 	}
 
-	BN_clear_free(&tmp_mask);
+	mpi_free(&tmp_mask);
 	return arr;
 
 err_out:
-	BN_clear_free(&tmp_mask);
+	mpi_free(&tmp_mask);
 	g_ptr_array_free(arr, TRUE);
 	return NULL;
 }
