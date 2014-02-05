@@ -14,6 +14,7 @@
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 #endif
+#define SHA256_DIGEST_LENGTH 32
 
 enum {
 	VALSTR_SZ	= 18,

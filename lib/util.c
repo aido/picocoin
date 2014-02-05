@@ -4,7 +4,6 @@
  */
 #include "picocoin-config.h"
 
-
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -12,7 +11,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <openssl/sha.h>
+#include <polarssl/sha256.h>
 #include <openssl/ripemd.h>
 #include <ccoin/coredefs.h>
 #include <ccoin/util.h>
@@ -29,24 +28,26 @@ void bu_reverse_copy(unsigned char *dst, const unsigned char *src, size_t len)
 void bu_Hash(unsigned char *md256, const void *data, size_t data_len)
 {
 	unsigned char md1[SHA256_DIGEST_LENGTH];
+	int is224 = 0;
 
-	SHA256(data, data_len, md1);
-	SHA256(md1, SHA256_DIGEST_LENGTH, md256);
+	sha256(data, data_len, md1, is224);
+	sha256(md1, SHA256_DIGEST_LENGTH, md256, is224);
 }
 
 void bu_Hash_(unsigned char *md256,
 		     const void *data1, size_t data_len1,
 		     const void *data2, size_t data_len2)
 {
-	SHA256_CTX ctx;
+	sha256_context ctx;
 	unsigned char md1[SHA256_DIGEST_LENGTH];
+	int is224 = 0;
+	
+	sha256_starts(&ctx, is224);
+	sha256_update(&ctx, data1, data_len1);
+	sha256_update(&ctx, data2, data_len2);
+	sha256_finish(&ctx, md1);
 
-	SHA256_Init(&ctx);
-	SHA256_Update(&ctx, data1, data_len1);
-	SHA256_Update(&ctx, data2, data_len2);
-	SHA256_Final(md1, &ctx);
-
-	SHA256(md1, SHA256_DIGEST_LENGTH, md256);
+	sha256(md1, SHA256_DIGEST_LENGTH, md256, is224);
 }
 
 void bu_Hash4(unsigned char *md32, const void *data, size_t data_len)
@@ -60,8 +61,9 @@ void bu_Hash4(unsigned char *md32, const void *data, size_t data_len)
 void bu_Hash160(unsigned char *md160, const void *data, size_t data_len)
 {
 	unsigned char md1[SHA256_DIGEST_LENGTH];
+	int is224 = 0;
 
-	SHA256(data, data_len, md1);
+	sha256(data, data_len, md1, is224);
 	RIPEMD160(md1, SHA256_DIGEST_LENGTH, md160);
 }
 

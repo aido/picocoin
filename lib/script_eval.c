@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <openssl/ripemd.h>
 #include <polarssl/sha1.h>
+#include <polarssl/sha256.h>
 #include <ccoin/script.h>
 #include <ccoin/util.h>
 #include <ccoin/key.h>
@@ -868,7 +869,8 @@ static bool bp_script_eval(GPtrArray *stack, const GString *script,
 				break;
 			case OP_SHA256:
 				hashlen = 32;
-				SHA256(vch->p, vch->len, md);
+				int is224 = 0;
+				SHA256(vch->p, vch->len, md, is224);
 				break;
 			case OP_HASH160:
 				hashlen = 20;

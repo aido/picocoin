@@ -6,20 +6,25 @@
 
 #include <string.h>
 #include <assert.h>
-#include <openssl/sha.h>
+#include <polarssl/sha256.h>
+#include <ccoin/util.h>
 #include <ccoin/bloom.h>
 #include "libtest.h"
 
+#define SHA256_DIGEST_LENGTH 32
+
 static const char *data1 = "foo";
 static const char *data2 = "bar";
+
+int is224 = 0;
 
 static void runtest (void)
 {
 	unsigned char md1[SHA256_DIGEST_LENGTH];
 	unsigned char md2[SHA256_DIGEST_LENGTH];
 
-	SHA256((unsigned char *)data1, strlen(data1), md1);
-	SHA256((unsigned char *)data2, strlen(data2), md2);
+	sha256((unsigned char *)data1, strlen(data1), md1, is224);
+	sha256((unsigned char *)data2, strlen(data2), md2, is224);
 
 	struct bloom bloom;
 
