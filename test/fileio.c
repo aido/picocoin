@@ -14,7 +14,6 @@
 #include "libtest.h"
 
 #define RANDOM_DATA_SHA1SUM "18833691a6d0ad9c481dcbc6d0da0d3245d7c627"
-#define SHA1_DIGEST_LENGTH 20
 
 void *data = NULL;
 size_t data_len = 0;

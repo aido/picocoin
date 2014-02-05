@@ -11,8 +11,6 @@
 #include <ccoin/bloom.h>
 #include "libtest.h"
 
-#define SHA256_DIGEST_LENGTH 32
-
 static const char *data1 = "foo";
 static const char *data2 = "bar";
 

@@ -4,9 +4,9 @@
 #define _GNU_SOURCE			/* for memmem */
 #include <string.h>
 #include <assert.h>
-#include <openssl/ripemd.h>
 #include <polarssl/sha1.h>
 #include <polarssl/sha256.h>
+#include <polarssl/ripemd160.h>
 #include <ccoin/script.h>
 #include <ccoin/util.h>
 #include <ccoin/key.h>
@@ -860,24 +860,24 @@ static bool bp_script_eval(GPtrArray *stack, const GString *script,
 
 			switch (opcode) {
 			case OP_RIPEMD160:
-				hashlen = 20;
-				RIPEMD160(vch->p, vch->len, md);
+				hashlen = RIPEMD160_DIGEST_LENGTH;
+				ripemd160(vch->p, vch->len, md);
 				break;
 			case OP_SHA1:
-				hashlen = 20;
+				hashlen = SHA1_DIGEST_LENGTH;
 				sha1(vch->p, vch->len, md);
 				break;
 			case OP_SHA256:
-				hashlen = 32;
+				hashlen = SHA256_DIGEST_LENGTH;
 				int is224 = 0;
-				SHA256(vch->p, vch->len, md, is224);
+				sha256(vch->p, vch->len, md, is224);
 				break;
 			case OP_HASH160:
-				hashlen = 20;
+				hashlen = RIPEMD160_DIGEST_LENGTH;
 				bu_Hash160(md, vch->p, vch->len);
 				break;
 			case OP_HASH256:
-				hashlen = 32;
+				hashlen = SHA256_DIGEST_LENGTH;
 				bu_Hash(md, vch->p, vch->len);
 				break;
 			default:

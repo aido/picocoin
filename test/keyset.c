@@ -6,7 +6,6 @@
 
 #include <string.h>
 #include <assert.h>
-#include <openssl/ripemd.h>
 #include <ccoin/key.h>
 #include <ccoin/util.h>
 #include "libtest.h"

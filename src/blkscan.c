@@ -11,7 +11,6 @@
 #include <ctype.h>
 #include <argp.h>
 #include <glib.h>
-#include <openssl/ripemd.h>
 #include <ccoin/coredefs.h>
 #include <ccoin/base58.h>
 #include <ccoin/buffer.h>

@@ -12,7 +12,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <polarssl/sha256.h>
-#include <openssl/ripemd.h>
+#include <polarssl/ripemd160.h>
 #include <ccoin/coredefs.h>
 #include <ccoin/util.h>
 #include <ccoin/compat.h>		/* for mkstemp */
@@ -64,7 +64,7 @@ void bu_Hash160(unsigned char *md160, const void *data, size_t data_len)
 	int is224 = 0;
 
 	sha256(data, data_len, md1, is224);
-	RIPEMD160(md1, SHA256_DIGEST_LENGTH, md160);
+	ripemd160(md1, SHA256_DIGEST_LENGTH, md160);
 }
 
 bool bu_read_file(const char *filename, void **data_, size_t *data_len_,

@@ -4,7 +4,6 @@
  */
 #include "picocoin-config.h"
 
-#include <openssl/ripemd.h>
 #include <glib.h>
 #include <ccoin/address.h>
 #include <ccoin/base58.h>

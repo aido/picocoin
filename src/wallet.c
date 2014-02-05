@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include <openssl/ripemd.h>
 #include <glib.h>
 #include <jansson.h>
 #include <ccoin/coredefs.h>
