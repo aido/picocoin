@@ -7,7 +7,6 @@
 #include <stdint.h>
 #include <string.h>
 #include <glib.h>
-#include <openssl/sha.h>
 #include <ccoin/serialize.h>
 #include <ccoin/util.h>
 #include <ccoin/compat.h>

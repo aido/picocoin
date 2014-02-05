@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include <openssl/sha.h>
+#include <polarssl/sha1.h>
 
 #include <ccoin/util.h>
 #include <ccoin/hexcode.h>
@@ -14,6 +14,7 @@
 #include "libtest.h"
 
 #define RANDOM_DATA_SHA1SUM "18833691a6d0ad9c481dcbc6d0da0d3245d7c627"
+#define SHA1_DIGEST_LENGTH 20
 
 void *data = NULL;
 size_t data_len = 0;
@@ -30,11 +31,11 @@ static void test_read(const char *filename)
 	assert(data != NULL);
 	assert(data_len == 8193);
 
-	unsigned char md[SHA_DIGEST_LENGTH];
-	SHA1(data, data_len, md);
+	unsigned char md[SHA1_DIGEST_LENGTH];
+	sha1(data, data_len, md);
 
-	char hexstr[(SHA_DIGEST_LENGTH * 2) + 1];
-	encode_hex(hexstr, md, SHA_DIGEST_LENGTH);
+	char hexstr[(SHA1_DIGEST_LENGTH * 2) + 1];
+	encode_hex(hexstr, md, SHA1_DIGEST_LENGTH);
 
 	assert(strcmp(hexstr, RANDOM_DATA_SHA1SUM) == 0);
 }

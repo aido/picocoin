@@ -4,8 +4,8 @@
 #define _GNU_SOURCE			/* for memmem */
 #include <string.h>
 #include <assert.h>
-#include <openssl/sha.h>
 #include <openssl/ripemd.h>
+#include <polarssl/sha1.h>
 #include <ccoin/script.h>
 #include <ccoin/util.h>
 #include <ccoin/key.h>
@@ -864,7 +864,7 @@ static bool bp_script_eval(GPtrArray *stack, const GString *script,
 				break;
 			case OP_SHA1:
 				hashlen = 20;
-				SHA1(vch->p, vch->len, md);
+				sha1(vch->p, vch->len, md);
 				break;
 			case OP_SHA256:
 				hashlen = 32;
