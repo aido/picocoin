@@ -14,7 +14,8 @@
 #include <ctype.h>
 #include <errno.h>
 #include <assert.h>
-#include <openssl/rand.h>
+#include <polarssl/entropy.h>
+#include <polarssl/ctr_drbg.h>
 #include <event2/event.h>
 #include <ccoin/core.h>
 #include <ccoin/util.h>
@@ -1510,6 +1511,31 @@ static void shutdown_daemon(struct net_child_info *nci)
 	}
 }
 
+static int rand_bytes(unsigned char *buf, int num)
+{
+	ctr_drbg_context ctr_drbg;
+	entropy_context entropy;
+
+	char *pers = "brd_rand_bytes";
+	int ret = 0;
+	
+	entropy_init(&entropy);
+	if ((ret = ctr_drbg_init(&ctr_drbg, entropy_func, &entropy,
+					(unsigned char *) pers, strlen(pers))) != 0 ) {
+		fprintf(stderr, "rand_bytes: ctr_drbg_init returned -0x%04x\n", -ret);
+		goto out;
+	}
+
+	if ((ret = ctr_drbg_random(&ctr_drbg, buf, num)) != 0 ) {
+		fprintf(stderr, "rand_bytes: ctr_drbg_random returned -0x%04x\n", -ret);
+		goto out;
+	}
+	
+out:
+	entropy_free(&entropy);
+	return ret;
+}
+
 static void term_signal(int signo)
 {
 	daemon_running = false;
@@ -1525,7 +1551,8 @@ int main (int argc, char *argv[])
 		return 1;
 	chain_set();
 
-	RAND_bytes((unsigned char *)&instance_nonce, sizeof(instance_nonce));
+	if (rand_bytes((unsigned char *)&instance_nonce, sizeof(instance_nonce)) != 0 )
+		return 1;
 
 	unsigned int arg;
 	for (arg = 1; arg < argc; arg++) {

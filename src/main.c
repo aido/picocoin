@@ -20,7 +20,8 @@
 #endif
 #include <ctype.h>
 #include <glib.h>
-#include <openssl/rand.h>
+#include <polarssl/entropy.h>
+#include <polarssl/ctr_drbg.h>
 #include "picocoin.h"
 #include <ccoin/coredefs.h>
 #include "wallet.h"
@@ -306,6 +307,31 @@ static bool do_command(const char *s)
 	return true;
 }
 
+static int rand_bytes(unsigned char *buf, int num)
+{
+	ctr_drbg_context ctr_drbg;
+	entropy_context entropy;
+
+	char *pers = "picocoin_rand_bytes";
+	int ret = 0;
+	
+	entropy_init(&entropy);
+	if ((ret = ctr_drbg_init(&ctr_drbg, entropy_func, &entropy,
+					(unsigned char *) pers, strlen(pers))) != 0 ) {
+		fprintf(stderr, "rand_bytes: ctr_drbg_init returned -0x%04x\n", -ret);
+		goto out;
+	}
+
+	if ((ret = ctr_drbg_random(&ctr_drbg, buf, num)) != 0 ) {
+		fprintf(stderr, "rand_bytes: ctr_drbg_random returned -0x%04x\n", -ret);
+		goto out;
+	}
+	
+out:
+	entropy_free(&entropy);
+	return ret;
+}
+
 int main (int argc, char *argv[])
 {
 	prog_name = argv[0];
@@ -316,7 +342,8 @@ int main (int argc, char *argv[])
 		return 1;
 	chain_set();
 
-	RAND_bytes((unsigned char *)&instance_nonce, sizeof(instance_nonce));
+	if (rand_bytes((unsigned char *)&instance_nonce, sizeof(instance_nonce)) != 0 )
+		return 1;
 
 	unsigned int arg;
 	for (arg = 1; arg < argc; arg++) {

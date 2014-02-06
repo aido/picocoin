@@ -6,7 +6,6 @@
 
 #include <string.h>
 #include <assert.h>
-#include <polarssl/sha256.h>
 #include <ccoin/util.h>
 #include <ccoin/bloom.h>
 #include "libtest.h"
