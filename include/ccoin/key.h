@@ -7,11 +7,18 @@
 
 #include <stdbool.h>
 #include <glib.h>
-#include <openssl/ec.h>
+#include <polarssl/entropy.h>
+#include <polarssl/ctr_drbg.h>
+#include <polarssl/pk.h>
 #include <ccoin/buint.h>
 
+#define ECPARAMS    POLARSSL_ECP_DP_SECP256K1
+#define MAX_SIG_LEN	32
+
 struct bp_key {
-	EC_KEY		*k;
+	pk_context pk;
+	entropy_context e;
+	ctr_drbg_context c;
 };
 
 extern bool bp_key_init(struct bp_key *key);
@@ -50,5 +57,7 @@ extern bool bkeys_privkey_get(struct bp_keystore *ks, const bu160_t *key_id,
 		      struct bp_key *key);
 extern bool bkeys_pubkey_append(struct bp_keystore *ks, const bu160_t *key_id,
 			GString *scriptSig);
+
+int ecp_point_read_binary_compressed(const ecp_group *group, ecp_point *point, const unsigned char *buffer, size_t ilen);
 
 #endif /* __LIBCCOIN_KEY_H__ */

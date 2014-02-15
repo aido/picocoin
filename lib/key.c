@@ -6,54 +6,49 @@
 #include "picocoin-config.h"
 
 #include <string.h>
-#include <openssl/ec.h>
-#include <openssl/ecdsa.h>
-#include <openssl/obj_mac.h>
 #include <ccoin/key.h>
 
 /* Generate a private key from just the secret parameter */
-static int EC_KEY_regenerate_key(EC_KEY *eckey, BIGNUM *priv_key)
+static bool bp_key_regenerate(struct bp_key *key, mpi *priv_key)
 {
-	int ok = 0;
-	BN_CTX *ctx = NULL;
-	EC_POINT *pub_key = NULL;
+	/* TODO: Confirm the usefulness of this function or remove it */
+	bool ret = false;
+	ecp_point pub_key;
 
-	if (!eckey) return 0;
+	if (!&key->pk)
+		goto err_out;
 
-	const EC_GROUP *group = EC_KEY_get0_group(eckey);
+	ecp_keypair *ecp = pk_ec(key->pk);
 
-	if ((ctx = BN_CTX_new()) == NULL)
-		goto err;
+	ecp_point_init(&pub_key);
 
-	pub_key = EC_POINT_new(group);
+	if ( ecp_mul(&ecp->grp, &pub_key, priv_key, &ecp->grp.G, ctr_drbg_random, &key->c) !=0 )
+		goto err_out;
 
-	if (pub_key == NULL)
-		goto err;
+	if ( ecp_copy(&ecp->Q, &pub_key) !=0 )
+		goto err_out;
 
-	if (!EC_POINT_mul(group, pub_key, priv_key, NULL, NULL, ctx))
-		goto err;
+	ret = true;
 
-	EC_KEY_set_private_key(eckey,priv_key);
-	EC_KEY_set_public_key(eckey,pub_key);
-
-	ok = 1;
-
-err:
-
-	if (pub_key)
-		EC_POINT_free(pub_key);
-	if (ctx != NULL)
-		BN_CTX_free(ctx);
-
-	return(ok);
+err_out:
+        ecp_point_free(&pub_key);
+	return ret;
 }
 
 bool bp_key_init(struct bp_key *key)
 {
-	memset(key, 0, sizeof(*key));
+	/* TODO: Add a more random personalised string */
+	const char *pers = "bp_key_ecdsa";
 
-	key->k = EC_KEY_new_by_curve_name(NID_secp256k1);
-	if (!key->k)
+	pk_init(&key->pk);
+	entropy_init(&key->e);
+
+	if( (ctr_drbg_init(&key->c, entropy_func, &key->e,
+					(const unsigned char *) pers,
+					strlen(pers))) != 0 )
+		return false;
+
+	if( pk_init_ctx(&key->pk, pk_info_from_type(POLARSSL_PK_ECKEY)) != 0 )
 		return false;
 
 	return true;
@@ -61,23 +56,23 @@ bool bp_key_init(struct bp_key *key)
 
 void bp_key_free(struct bp_key *key)
 {
-	if (key->k) {
-		EC_KEY_free(key->k);
-		key->k = NULL;
+	if (&key->pk) {
+		pk_free(&key->pk);
+	}
+	if (&key->e) {
+		entropy_free(&key->e);
 	}
 }
 
 bool bp_key_generate(struct bp_key *key)
 {
-	if (!key->k)
+	if ( !&key->pk || !&key->e || !&key->c )
 		return false;
 
-	if (!EC_KEY_generate_key(key->k))
-		return false;
-	if (!EC_KEY_check_key(key->k))
+	if( ecp_gen_key(ECPARAMS, pk_ec(key->pk), ctr_drbg_random, &key->c) != 0 )
 		return false;
 
-	EC_KEY_set_conv_form(key->k, POINT_CONVERSION_COMPRESSED);
+    /* TODO: Check if key is compressed or uncompressed */
 
 	return true;
 }
@@ -85,12 +80,13 @@ bool bp_key_generate(struct bp_key *key)
 bool bp_privkey_set(struct bp_key *key, const void *privkey_, size_t pk_len)
 {
 	const unsigned char *privkey = privkey_;
-	if (!d2i_ECPrivateKey(&key->k, &privkey, pk_len))
-		return false;
-	if (!EC_KEY_check_key(key->k))
+	int ret;
+
+	if ( (ret = pk_parse_key(&key->pk, privkey, pk_len, NULL, 0)) != 0 )
 		return false;
 
-	EC_KEY_set_conv_form(key->k, POINT_CONVERSION_COMPRESSED);
+	if ( pk_can_do(&key->pk, POLARSSL_PK_ECDSA) != 1 )
+		return false;
 
 	return true;
 }
@@ -98,94 +94,130 @@ bool bp_privkey_set(struct bp_key *key, const void *privkey_, size_t pk_len)
 bool bp_pubkey_set(struct bp_key *key, const void *pubkey_, size_t pk_len)
 {
 	const unsigned char *pubkey = pubkey_;
-	if (!o2i_ECPublicKey(&key->k, &pubkey, pk_len))
+	ecp_keypair *ecp = pk_ec(key->pk);
+
+	if ( ecp_use_known_dp( &ecp->grp, POLARSSL_ECP_DP_SECP256K1 ) != 0 )
 		return false;
-	if (pk_len == 33)
-		EC_KEY_set_conv_form(key->k, POINT_CONVERSION_COMPRESSED);
+
+//	if ( ecp_point_read_binary( &ecp->grp, &ecp->Q, pubkey, pk_len ) != 0 )
+	if ( ecp_point_read_binary_compressed( &ecp->grp, &ecp->Q, pubkey, pk_len ) != 0 )
+		return false;
+
+	if ( pk_can_do(&key->pk, POLARSSL_PK_ECDSA) != 1 )
+		return false;
+
 	return true;
 }
 
 bool bp_key_secret_set(struct bp_key *key, const void *privkey_, size_t pk_len)
 {
+	/* TODO: Confirm the usefulness of this function or remove it */
+
 	bp_key_free(key);
 
 	if (!privkey_ || pk_len != 32)
 		return false;
 
 	const unsigned char *privkey = privkey_;
-	BIGNUM *bn = BN_bin2bn(privkey, 32, BN_new());
-	if (!bn)
+
+	mpi bn;
+	mpi_init(&bn);
+
+	if ( mpi_read_binary(&bn, privkey, sizeof(privkey)) != 0)
 		return false;
 
-	key->k = EC_KEY_new_by_curve_name(NID_secp256k1);
-	if (!key->k)
-		goto err_out;
+	if (!&key->pk)
+		goto err;
 
-	if (!EC_KEY_regenerate_key(key->k, bn))
-		goto err_out;
-	if (!EC_KEY_check_key(key->k))
-		return false;
+	if (!bp_key_regenerate(key, &bn))
+		goto err;
 
-	EC_KEY_set_conv_form(key->k, POINT_CONVERSION_COMPRESSED);
+	ecp_keypair *ecp = pk_ec(key->pk);
 
-	BN_clear_free(bn);
+	if ( ecp_check_privkey(&ecp->grp, &ecp->d) != 0 )
+		goto err;
+
+	if ( ecp_check_pubkey(&ecp->grp, &ecp->Q) != 0 )
+		goto err;
+
+	if ( pk_can_do(&key->pk, POLARSSL_PK_ECDSA) != 1 )
+		goto err;
+
+	mpi_free(&bn);
+
 	return true;
 
-err_out:
+err:
 	bp_key_free(key);
-	BN_clear_free(bn);
+	mpi_free(&bn);
 	return false;
 }
 
 bool bp_privkey_get(struct bp_key *key, void **privkey, size_t *pk_len)
 {
-	if (!EC_KEY_check_key(key->k))
+	ecp_keypair *ecp = pk_ec(key->pk);
+
+	if ( ecp_check_privkey(&ecp->grp, &ecp->d) != 0 )
+			return false;
+
+	size_t len = pk_get_len(&key->pk);
+
+	if ( len == 0 )
 		return false;
 
-	size_t sz = i2d_ECPrivateKey(key->k, 0);
-	unsigned char *orig_mem, *mem = malloc(sz);
+	unsigned char *orig_mem, *mem = malloc(len);
 	orig_mem = mem;
-	i2d_ECPrivateKey(key->k, &mem);
+
+	if ( pk_write_key_der(&key->pk, mem, len) != 0 )
+		return false;
 
 	*privkey = orig_mem;
-	*pk_len = sz;
+	*pk_len = len;
 
 	return true;
 }
 
 bool bp_pubkey_get(struct bp_key *key, void **pubkey, size_t *pk_len)
 {
-	if (!EC_KEY_check_key(key->k))
+	ecp_keypair *ecp = pk_ec(key->pk);
+
+	if ( ecp_check_pubkey(&ecp->grp, &ecp->Q) != 0 )
 		return false;
 
-	size_t sz = i2o_ECPublicKey(key->k, 0);
-	unsigned char *orig_mem, *mem = malloc(sz);
-	orig_mem = mem;
-	i2o_ECPublicKey(key->k, &mem);
+	size_t buf_sz = pk_get_len(&key->pk) + 1;
+	size_t len;
 
-	*pubkey = orig_mem;
-	*pk_len = sz;
+	unsigned char *buf = malloc(buf_sz);
+
+	if ( ecp_point_write_binary( &ecp->grp, &ecp->Q, POLARSSL_ECP_PF_COMPRESSED, &len, buf, buf_sz ) != 0 )
+	    return false;
+
+	*pubkey = buf;
+	*pk_len = len;
 
 	return true;
 }
 
 bool bp_key_secret_get(void *p, size_t len, const struct bp_key *key)
 {
+	/* TODO: Confirm the usefulness of this function or remove it */
+
 	if (!p || len < 32 || !key)
 		return false;
 
 	/* zero buffer */
 	memset(p, 0, len);
 
-	/* get bignum secret */
-	const BIGNUM *bn = EC_KEY_get0_private_key(key->k);
+	ecp_keypair *ecp = pk_ec(key->pk);
+
+	/* get mpi secret */
+	const mpi *bn = &ecp->d;
 	if (!bn)
 		return false;
-	int nBytes = BN_num_bytes(bn);
+	int nBytes = mpi_size(bn);
 
 	/* store secret at end of buffer */
-	int n = BN_bn2bin(bn, p + (len - nBytes));
-	if (n != nBytes)
+	if ( mpi_write_binary(bn, p + (len - nBytes), nBytes) != 0 )
 		return false;
 
 	return true;
@@ -194,12 +226,15 @@ bool bp_key_secret_get(void *p, size_t len, const struct bp_key *key)
 bool bp_sign(struct bp_key *key, const void *data, size_t data_len,
 	     void **sig_, size_t *sig_len_)
 {
-	size_t sig_sz = ECDSA_size(key->k);
+	size_t sig_sz = MAX_SIG_LEN;
 	void *sig = calloc(1, sig_sz);
-	unsigned int sig_sz_out = sig_sz;
+	size_t sig_sz_out = sig_sz;
 
-	int src = ECDSA_sign(0, data, data_len, sig, &sig_sz_out, key->k);
-	if (src != 1) {
+	if ( pk_sign(&key->pk,
+				 POLARSSL_MD_NONE,
+				 data, data_len,
+				 sig, &sig_sz_out,
+				 ctr_drbg_random, &key->c) != 0 ) {
 		free(sig);
 		return false;
 	}
@@ -213,6 +248,76 @@ bool bp_sign(struct bp_key *key, const void *data, size_t data_len,
 bool bp_verify(struct bp_key *key, const void *data, size_t data_len,
 	       const void *sig, size_t sig_len)
 {
-	return ECDSA_verify(0, data, data_len, sig, sig_len, key->k) == 1;
+	bool is_valid = false;
+	size_t len;
+
+	// Loop until signature is correct length i.e. remove stuffed bytes
+//	TODO: This can be done more efficiently by using POLARSSL_ERR_PK_SIG_LEN_MISMATCH 
+	for( len = sig_len; !is_valid && len > 0; len-- )
+	{
+		if ( pk_verify(&key->pk, POLARSSL_MD_NONE, data, data_len, sig, len) == 0 )
+				is_valid = true;
+	}
+
+	return is_valid;
 }
 
+// TODO: This function can be removed if/when PolarSSL supports compressed points
+// Single purpose read point in binary format, only support compressed secp256k1 point
+int ecp_point_read_binary_compressed(const ecp_group *group, ecp_point *point, const unsigned char *buffer, size_t ilen) {
+	int ret;
+	unsigned char parity;
+	size_t plen;
+	mpi e, y2;
+
+	mpi_init(&e); mpi_init(&y2);
+
+	ret = ecp_point_read_binary(group, point, buffer, ilen);
+	if (POLARSSL_ERR_ECP_FEATURE_UNAVAILABLE != ret) {
+		return ret;
+	}
+
+	if (POLARSSL_ECP_DP_SECP256K1 != group->id) {
+		return POLARSSL_ERR_ECP_FEATURE_UNAVAILABLE;
+	}
+
+	if (0x02 == buffer[0]) {
+		parity = 0;
+	} else if (0x03 == buffer[0]) {
+		parity = 1;
+	} else {
+		return POLARSSL_ERR_ECP_BAD_INPUT_DATA;
+	}
+
+	plen = mpi_size(&group->P);
+
+	if (ilen != plen + 1) {
+		return POLARSSL_ERR_ECP_BAD_INPUT_DATA;
+	}
+
+	MPI_CHK(mpi_read_binary(&point->X, buffer + 1, plen));
+	MPI_CHK(mpi_lset(&point->Z, 1));
+
+	// Set y2 = X^3 + B
+	MPI_CHK(mpi_mul_mpi(&y2, &point->X, &point->X));
+	MPI_CHK(mpi_mod_mpi(&y2, &y2, &group->P));
+	MPI_CHK(mpi_mul_mpi(&y2, &y2, &point->X));
+	MPI_CHK(mpi_add_mpi(&y2, &y2, &group->B));
+	MPI_CHK(mpi_mod_mpi(&y2, &y2, &group->P));
+
+	// Compute square root of y2
+	MPI_CHK(mpi_add_int(&e, &group->P, 1));
+	MPI_CHK(mpi_shift_r(&e, 2));
+	MPI_CHK(mpi_exp_mod(&point->Y, &y2, &e, &group->P, NULL));
+
+	// Set parity
+	if (mpi_get_bit(&point->Y, 0) != parity) {
+		MPI_CHK(mpi_sub_mpi(&point->Y, &group->P, &point->Y));
+	}
+
+cleanup:
+	mpi_free(&e);
+	mpi_free(&y2);
+
+	return ret;
+}

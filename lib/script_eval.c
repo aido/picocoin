@@ -164,20 +164,16 @@ static bool CastToBigNum(mpi *vo, const struct buffer *buf)
 static bool CastToBool(const struct buffer *buf)
 {
 	unsigned int i;
-	unsigned char testchar;
 	const unsigned char *vch = buf->p;
 
 	for (i = 0; i < buf->len; i++) {
-		testchar = vch[i];
-
-		/* turn off sign bit */
-		if (i == 0 && testchar & 0x80)
-			testchar &= 0x7F;
-
-		if (testchar != 0)
+		if (vch[i] != 0) {
+			// Can be negative zero
+			if (i == (buf->len - 1) && vch[i] == 0x80)
+				return false;
 			return true;
+		}
 	}
-
 	return false;
 }
 
@@ -1066,6 +1062,7 @@ bool bp_script_verify(const GString *scriptSig, const GString *scriptPubKey,
 
 	if (!bp_script_eval(stack, scriptPubKey, txTo, nIn, flags, nHashType))
 		goto out;
+
 	if (stack->len == 0)
 		goto out;
 

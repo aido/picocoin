@@ -312,9 +312,10 @@ static int rand_bytes(unsigned char *buf, int num)
 	ctr_drbg_context ctr_drbg;
 	entropy_context entropy;
 
+	/* TODO: Add a more random personalised string */
 	char *pers = "picocoin_rand_bytes";
 	int ret = 0;
-	
+
 	entropy_init(&entropy);
 	if ((ret = ctr_drbg_init(&ctr_drbg, entropy_func, &entropy,
 					(unsigned char *) pers, strlen(pers))) != 0 ) {
@@ -326,7 +327,7 @@ static int rand_bytes(unsigned char *buf, int num)
 		fprintf(stderr, "rand_bytes: ctr_drbg_random returned -0x%04x\n", -ret);
 		goto out;
 	}
-	
+
 out:
 	entropy_free(&entropy);
 	return ret;

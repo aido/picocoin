@@ -26,16 +26,16 @@ GString *base58_encode(const void *data_, size_t data_len)
 
 	// Convert data to mpi
         mpi_init(&bn);
-	
-	if (!(mpi_read_binary(&bn, data, data_len) == 0))
-		goto err_out;
-	
-	while (mpi_cmp_int(&bn, 0) > 0) {
-                if (!(mpi_mod_int(&c, &bn, 58) == 0))
-                        goto err_out;
-                g_string_append_c(rs, base58_chars[c]);
 
-		if (!(mpi_div_int(&bn, NULL, &bn, 58) == 0))
+	if ( mpi_read_binary(&bn, data, data_len) != 0 )
+		goto err_out;
+
+	while (mpi_cmp_int(&bn, 0) > 0) {
+		if ( mpi_mod_int(&c, &bn, 58) != 0 )
+				goto err_out;
+		g_string_append_c(rs, base58_chars[c]);
+
+		if ( mpi_div_int(&bn, NULL, &bn, 58) != 0 )
 			goto err_out;
 	}
 
@@ -59,7 +59,6 @@ GString *base58_encode(const void *data_, size_t data_len)
 
 out:
 	mpi_free(&bn);
-
 	return rs;
 
 err_out:
@@ -114,11 +113,11 @@ GString *base58_decode(const char *s_in)
 			}
 			break;
 		}
-		if (!(mpi_mul_int(&bn, &bn, 58) == 0)) {
+		if ( mpi_mul_int(&bn, &bn, 58) != 0 ) {
 			mpi_free(&bn);
 			return ret;
 		}
-		if (!(mpi_add_int(&bn, &bn,  p1 - base58_chars) == 0)) {
+		if ( mpi_add_int(&bn, &bn,  p1 - base58_chars) != 0 ) {
 			mpi_free(&bn);
 			return ret;
 		}
@@ -128,7 +127,7 @@ GString *base58_decode(const char *s_in)
 	GString *tmp_be = g_string_sized_new(mpi_size(&bn));
 	g_string_set_size(tmp_be, mpi_size(&bn));
 
-	if (!(mpi_write_binary(&bn, (unsigned char *)tmp_be->str, mpi_size(&bn)) == 0))
+	if ( mpi_write_binary(&bn, (unsigned char *)tmp_be->str, mpi_size(&bn)) != 0 )
 		goto out;
 
 	// Restore leading zeros
@@ -138,8 +137,8 @@ GString *base58_decode(const char *s_in)
 	ret = tmp_be;
 
 out:
-        mpi_free(&bn);
-        return ret;
+	mpi_free(&bn);
+	return ret;
 }
 
 GString *base58_decode_check(unsigned char *addrtype, const char *s_in)
