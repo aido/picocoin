@@ -30,12 +30,6 @@ extern bool debugging;
 /* net.c */
 extern void network_sync(void);
 
-/* aes.c */
-extern GString *read_aes_file(const char *filename, void *key, size_t key_len,
-			      size_t max_file_len);
-extern bool write_aes_file(const char *filename, void *key, size_t key_len,
-		    const void *plaintext, size_t pt_len);
-
 static inline char *setting(const char *key)
 {
 	return g_hash_table_lookup(settings, key);

@@ -14,10 +14,9 @@ brd_SOURCES=		\
 	brd.h
 
 brd_LDADD	= libnode.a ../lib/libccoin.a $(top_srcdir)/polarssl/library/libpolarssl.a \
-		  @GLIB_LIBS@ @CRYPTO_LIBS@ @EVENT_LIBS@
+		  @GLIB_LIBS@ @EVENT_LIBS@
 
 picocoin_SOURCES=	\
-	aes.c		\
 	main.c		\
 	net.c		\
 	fakepoll.h	\
@@ -25,7 +24,7 @@ picocoin_SOURCES=	\
 	wallet.c wallet.h
 
 picocoin_LDADD	= libnode.a ../lib/libccoin.a $(top_srcdir)/polarssl/library/libpolarssl.a \
-		  @GLIB_LIBS@ @CRYPTO_LIBS@ @EVENT_LIBS@ @JANSSON_LIBS@
+		  @GLIB_LIBS@ @EVENT_LIBS@ @JANSSON_LIBS@
 
 blkscan_LDADD	= ../lib/libccoin.a $(top_srcdir)/polarssl/library/libpolarssl.a \
-		  @GLIB_LIBS@ @CRYPTO_LIBS@
+		  @GLIB_LIBS@

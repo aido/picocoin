@@ -6,6 +6,7 @@
 #include "picocoin-config.h"
 
 #include <string.h>
+
 #include <ccoin/key.h>
 
 /* Generate a private key from just the secret parameter */
@@ -158,20 +159,23 @@ bool bp_privkey_get(struct bp_key *key, void **privkey, size_t *pk_len)
 	ecp_keypair *ecp = pk_ec(key->pk);
 
 	if ( ecp_check_privkey(&ecp->grp, &ecp->d) != 0 )
-			return false;
-
-	size_t len = pk_get_len(&key->pk);
-
-	if ( len == 0 )
 		return false;
 
-	unsigned char *orig_mem, *mem = malloc(len);
-	orig_mem = mem;
+	size_t buf_sz = POLARSSL_ECP_MAX_PT_LEN;
+	int len;
 
-	if ( pk_write_key_der(&key->pk, mem, len) != 0 )
+	unsigned char *buf = malloc(buf_sz);
+
+	if ( (len = pk_write_key_der(&key->pk, buf, buf_sz)) <= 0 )
 		return false;
 
-	*privkey = orig_mem;
+	unsigned char *privkey_ = malloc(len);
+	memcpy(privkey_, buf + buf_sz - len, len);
+
+	/* zero buffer */
+	memset(buf, 0, buf_sz);
+
+	*privkey = privkey_;
 	*pk_len = len;
 
 	return true;
@@ -252,7 +256,7 @@ bool bp_verify(struct bp_key *key, const void *data, size_t data_len,
 	size_t len;
 
 	// Loop until signature is correct length i.e. remove stuffed bytes
-//	TODO: This can be done more efficiently by using POLARSSL_ERR_PK_SIG_LEN_MISMATCH 
+//	TODO: This can be done more efficiently by using POLARSSL_ERR_PK_SIG_LEN_MISMATCH
 	for( len = sig_len; !is_valid && len > 0; len-- )
 	{
 		if ( pk_verify(&key->pk, POLARSSL_MD_NONE, data, data_len, sig, len) == 0 )

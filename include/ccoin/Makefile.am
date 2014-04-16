@@ -18,5 +18,6 @@ EXTRA_DIST = \
 	net.h		\
 	script.h	\
 	serialize.h	\
-	util.h
+	util.h          \
+        aes.h
 

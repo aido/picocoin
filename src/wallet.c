@@ -4,22 +4,15 @@
  */
 #include "picocoin-config.h"
 
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-#include <glib.h>
 #include <jansson.h>
-#include <ccoin/coredefs.h>
+#include <ccoin/address.h>
+#include <ccoin/mbr.h>
+#include <ccoin/compat.h>		/* for g_ptr_array_new_full */
+#include <ccoin/serialize.h>
+#include <ccoin/hexcode.h>
+#include <ccoin/aes.h>
 #include "picocoin.h"
 #include "wallet.h"
-#include <ccoin/message.h>
-#include <ccoin/address.h>
-#include <ccoin/serialize.h>
-#include <ccoin/key.h>
-#include <ccoin/util.h>
-#include <ccoin/mbr.h>
-#include <ccoin/hexcode.h>
-#include <ccoin/compat.h>		/* for g_ptr_array_new_full */
 
 static struct wallet *wallet_new(void)
 {
@@ -145,8 +138,7 @@ static struct wallet *load_wallet(void)
 		return NULL;
 	}
 
-	GString *data = read_aes_file(filename, passphrase, strlen(passphrase),
-				      100 * 1024 * 1024);
+	GString *data = read_aes_file(filename, passphrase, strlen(passphrase));
 	if (!data) {
 		fprintf(stderr, "wallet: missing or invalid\n");
 		return NULL;
@@ -473,4 +465,3 @@ void wallet_dump(void)
 
 	printf("\n");
 }
-

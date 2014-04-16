@@ -27,7 +27,7 @@ TESTS		= hex base58 fileio util keyset bloom \
 		  tx-valid wallet-basics chain-verf
 
 COMMON_LDADD	= libtest.a ../lib/libccoin.a $(top_srcdir)/polarssl/library/libpolarssl.a \
-		  @GLIB_LIBS@ @CRYPTO_LIBS@ @JANSSON_LIBS@ @MATH_LIBS@
+		  @GLIB_LIBS@ @JANSSON_LIBS@ @MATH_LIBS@
 
 base58_LDADD		= $(COMMON_LDADD)
 blkdb_LDADD		= $(COMMON_LDADD)

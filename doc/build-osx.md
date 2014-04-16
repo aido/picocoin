@@ -12,16 +12,16 @@ Dependencies
 This guide assumes usage of [Homebrew](http://mxcl.github.com/homebrew/) or
 [MacPorts](http://www.marcports.org) for installing dependencies.
 
-You will need to install `glib` and `OpenSSL` in order to build *libccoin*, and
+You will need to install `glib` in order to build *libccoin*, and
 those plus `libevent` and `jansson` to build *picocoin*.
 
 Install these packages. It will take a few minutes.
 
-    brew install glib openssl libevent jansson
+    brew install glib libevent jansson
 
 or
 
-    sudo port install glib2 openssl libevent jansson
+    sudo port install glib2 libevent jansson
 
 You may also need to install some development dependencies, if you have not
 already installed them for other projects.
@@ -38,7 +38,7 @@ Building
 Now, you can build!
 
     ./autogen.sh
-    ./configure CPPFLAGS="-I`brew --prefix openssl`/include"
+    ./configure
     make
 
 if you used Homebrew, or:
