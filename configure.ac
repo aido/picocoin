@@ -99,5 +99,8 @@ AC_CONFIG_FILES([
 	src/Makefile
 	test/Makefile
 	])
+
+AC_CONFIG_LINKS(polarssl/include/polarssl/config.h:include/polarssl/config.h)
+
 AC_OUTPUT
 
