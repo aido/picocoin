@@ -1,7 +1,7 @@
 
 INCLUDES	= @GLIB_CFLAGS@ -I$(top_srcdir)/include -I$(top_srcdir)/polarssl/include
 
-bin_PROGRAMS	= brd picocoin blkscan
+bin_PROGRAMS	= brd picocoin blkscan blkstats rawtx
 
 noinst_LIBRARIES= libnode.a
 
@@ -28,3 +28,9 @@ picocoin_LDADD	= libnode.a ../lib/libccoin.a $(top_srcdir)/polarssl/library/libp
 
 blkscan_LDADD	= ../lib/libccoin.a $(top_srcdir)/polarssl/library/libpolarssl.a \
 		  @GLIB_LIBS@
+
+blkstats_LDADD	= ../lib/libccoin.a $(top_srcdir)/polarssl/library/libpolarssl.a \
+		  @GLIB_LIBS@
+
+rawtx_LDADD	= ../lib/libccoin.a $(top_srcdir)/polarssl/library/libpolarssl.a \
+		  @GLIB_LIBS@ @JANSSON_LIBS@

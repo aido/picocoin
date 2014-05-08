@@ -14,11 +14,13 @@ config.status
 config.guess
 config.sub
 configure
+compile
 depcomp
 install-sh
 missing
 push
 stamp-h1
+test-driver
 
 # app-specific
 picocoin*.tar.gz

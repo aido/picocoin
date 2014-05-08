@@ -346,10 +346,12 @@ int main (int argc, char *argv[])
 	if (rand_bytes((unsigned char *)&instance_nonce, sizeof(instance_nonce)) != 0 )
 		return 1;
 
+	bool done_command = false;
 	unsigned int arg;
 	for (arg = 1; arg < argc; arg++) {
 		const char *argstr = argv[arg];
 		if (is_command(argstr)) {
+			done_command = true;
 			if (!do_command(argstr))
 				return 1;
 		} else {
@@ -358,6 +360,8 @@ int main (int argc, char *argv[])
 		}
 	}
 
+	if (!done_command)
+		do_command("help");
 	return 0;
 }
 
