@@ -21,7 +21,7 @@
 #include <ctype.h>
 #include <glib.h>
 #include <polarssl/entropy.h>
-#include <polarssl/ctr_drbg.h>
+#include <polarssl/hmac_drbg.h>
 #include "picocoin.h"
 #include <ccoin/coredefs.h>
 #include "wallet.h"
@@ -309,7 +309,7 @@ static bool do_command(const char *s)
 
 static int rand_bytes(unsigned char *buf, int num)
 {
-	ctr_drbg_context ctr_drbg;
+	hmac_drbg_context hmac_drbg;
 	entropy_context entropy;
 
 	/* TODO: Add a more random personalised string */
@@ -317,14 +317,15 @@ static int rand_bytes(unsigned char *buf, int num)
 	int ret = 0;
 
 	entropy_init(&entropy);
-	if ((ret = ctr_drbg_init(&ctr_drbg, entropy_func, &entropy,
+	if ((ret = hmac_drbg_init(&hmac_drbg, md_info_from_type(POLARSSL_MD_SHA1),
+					entropy_func, &entropy,
 					(unsigned char *) pers, strlen(pers))) != 0 ) {
-		fprintf(stderr, "rand_bytes: ctr_drbg_init returned -0x%04x\n", -ret);
+		fprintf(stderr, "rand_bytes: hmac_drbg_init returned -0x%04x\n", -ret);
 		goto out;
 	}
 
-	if ((ret = ctr_drbg_random(&ctr_drbg, buf, num)) != 0 ) {
-		fprintf(stderr, "rand_bytes: ctr_drbg_random returned -0x%04x\n", -ret);
+	if ((ret = hmac_drbg_random(&hmac_drbg, buf, num)) != 0 ) {
+		fprintf(stderr, "rand_bytes: hmac_drbg_random returned -0x%04x\n", -ret);
 		goto out;
 	}
 
