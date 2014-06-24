@@ -8,7 +8,7 @@
 #include <stdbool.h>
 #include <glib.h>
 #include <polarssl/entropy.h>
-#include <polarssl/ctr_drbg.h>
+#include <polarssl/hmac_drbg.h>
 #include <polarssl/pk.h>
 #include <ccoin/buint.h>
 
@@ -18,7 +18,7 @@
 struct bp_key {
 	pk_context pk;
 	entropy_context e;
-	ctr_drbg_context c;
+	hmac_drbg_context c;
 };
 
 extern bool bp_key_init(struct bp_key *key);
