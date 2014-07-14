@@ -294,7 +294,7 @@
  *
  * Enable padding modes in the cipher layer.
  */
-#define POLARSSL_CIPHER_PADDING_PKCS7
+//#define POLARSSL_CIPHER_PADDING_PKCS7
 //#define POLARSSL_CIPHER_PADDING_ONE_AND_ZEROS
 //#define POLARSSL_CIPHER_PADDING_ZEROS_AND_LEN
 //#define POLARSSL_CIPHER_PADDING_ZEROS
@@ -655,7 +655,7 @@
  *
  * Enable functions that use the filesystem.
  */
-#define POLARSSL_FS_IO
+//#define POLARSSL_FS_IO
 
 /**
  * \def POLARSSL_NO_DEFAULT_ENTROPY_SOURCES
@@ -1352,7 +1352,7 @@
  *
  * PEM_PARSE uses DES/3DES for decrypting encrypted keys.
  */
-#define POLARSSL_DES_C // ???
+//#define POLARSSL_DES_C // ???
 
 /**
  * \def POLARSSL_DHM_C
@@ -1538,7 +1538,7 @@
  * This module is required for SSL/TLS and X.509.
  * PEM_PARSE uses MD5 for decrypting encrypted keys.
  */
-#define POLARSSL_MD5_C // ???
+//#define POLARSSL_MD5_C // ???
 
 /**
  * \def POLARSSL_MEMORY_C
@@ -1640,7 +1640,7 @@
  *
  * This modules adds support for decoding / parsing PEM files.
  */
-#define POLARSSL_PEM_PARSE_C
+//#define POLARSSL_PEM_PARSE_C
 
 /**
  * \def POLARSSL_PEM_WRITE_C
@@ -1656,7 +1656,7 @@
  *
  * This modules adds support for encoding / writing PEM files.
  */
-#define POLARSSL_PEM_WRITE_C
+//#define POLARSSL_PEM_WRITE_C
 
 /**
  * \def POLARSSL_PK_C
@@ -1954,7 +1954,7 @@
  *
  * This module is required for the X.509 parsing modules.
  */
-#define POLARSSL_X509_USE_C // !!!
+//#define POLARSSL_X509_USE_C // !!!
 
 /**
  * \def POLARSSL_X509_CRT_PARSE_C
@@ -1970,7 +1970,7 @@
  *
  * This module is required for X.509 certificate parsing.
  */
-#define POLARSSL_X509_CRT_PARSE_C // !!!
+//#define POLARSSL_X509_CRT_PARSE_C // !!!
 
 /**
  * \def POLARSSL_X509_CRL_PARSE_C

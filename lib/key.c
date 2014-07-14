@@ -23,7 +23,7 @@ static bool bp_key_regenerate(struct bp_key *key, mpi *priv_key)
 
 	ecp_point_init(&pub_key);
 
-	if ( ecp_mul(&ecp->grp, &pub_key, priv_key, &ecp->grp.G, hmac_drbg_random, &key->c) !=0 )
+	if ( ecp_mul(&ecp->grp, &pub_key, priv_key, &ecp->grp.G, hmac_drbg_random, &key->drbg) !=0 )
 		goto err_out;
 
 	if ( ecp_copy(&ecp->Q, &pub_key) !=0 )
@@ -42,10 +42,10 @@ bool bp_key_init(struct bp_key *key)
 	const char *pers = "bp_key_ecdsa";
 
 	pk_init(&key->pk);
-	entropy_init(&key->e);
+	entropy_init(&key->entropy);
 
-	if( (hmac_drbg_init(&key->c, md_info_from_type(POLARSSL_MD_SHA1),
-					entropy_func, &key->e,
+	if( (hmac_drbg_init(&key->drbg, md_info_from_type(POLARSSL_MD_SHA1),
+					entropy_func, &key->entropy,
 					(const unsigned char *) pers,
 					strlen(pers))) != 0 )
 		return false;
@@ -61,17 +61,17 @@ void bp_key_free(struct bp_key *key)
 	if (&key->pk) {
 		pk_free(&key->pk);
 	}
-	if (&key->e) {
-		entropy_free(&key->e);
+	if (&key->entropy) {
+		entropy_free(&key->entropy);
 	}
 }
 
 bool bp_key_generate(struct bp_key *key)
 {
-	if ( !&key->pk || !&key->e || !&key->c )
+	if ( !&key->pk || !&key->entropy || !&key->drbg )
 		return false;
 
-	if( ecp_gen_key(ECPARAMS, pk_ec(key->pk), hmac_drbg_random, &key->c) != 0 )
+	if( ecp_gen_key(ECPARAMS, pk_ec(key->pk), hmac_drbg_random, &key->drbg) != 0 )
 		return false;
 
     /* TODO: Check if key is compressed or uncompressed */
@@ -239,7 +239,7 @@ bool bp_sign(struct bp_key *key, const void *data, size_t data_len,
 				 POLARSSL_MD_NONE,
 				 data, data_len,
 				 sig, &sig_sz_out,
-				 hmac_drbg_random, &key->c) != 0 ) {
+				 hmac_drbg_random, &key->drbg) != 0 ) {
 		free(sig);
 		return false;
 	}

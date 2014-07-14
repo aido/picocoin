@@ -17,8 +17,8 @@
 
 struct bp_key {
 	pk_context pk;
-	entropy_context e;
-	hmac_drbg_context c;
+	entropy_context entropy;
+	hmac_drbg_context drbg;
 };
 
 extern bool bp_key_init(struct bp_key *key);
