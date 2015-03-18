@@ -100,7 +100,7 @@ AC_CONFIG_FILES([
 	test/Makefile
 	])
 
-AC_CONFIG_LINKS(polarssl/include/polarssl/config.h:include/polarssl/config.h)
+AC_CONFIG_LINKS(mbedtls/include/polarssl/config.h:include/polarssl/config.h)
 
 AC_OUTPUT
 

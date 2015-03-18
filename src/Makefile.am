@@ -1,5 +1,5 @@
 
-INCLUDES	= @GLIB_CFLAGS@ -I$(top_srcdir)/include -I$(top_srcdir)/polarssl/include
+INCLUDES	= @GLIB_CFLAGS@ -I$(top_srcdir)/include -I$(top_srcdir)/mbedtls/include
 
 bin_PROGRAMS	= brd picocoin blkscan blkstats rawtx
 
@@ -13,7 +13,7 @@ brd_SOURCES=		\
 	brd.c		\
 	brd.h
 
-brd_LDADD	= libnode.a ../lib/libccoin.a $(top_srcdir)/polarssl/library/libpolarssl.a \
+brd_LDADD	= libnode.a ../lib/libccoin.a $(top_srcdir)/mbedtls/library/libpolarssl.a \
 		  @GLIB_LIBS@ @EVENT_LIBS@
 
 picocoin_SOURCES=	\
@@ -23,14 +23,14 @@ picocoin_SOURCES=	\
 	picocoin.h	\
 	wallet.c wallet.h
 
-picocoin_LDADD	= libnode.a ../lib/libccoin.a $(top_srcdir)/polarssl/library/libpolarssl.a \
+picocoin_LDADD	= libnode.a ../lib/libccoin.a $(top_srcdir)/mbedtls/library/libpolarssl.a \
 		  @GLIB_LIBS@ @EVENT_LIBS@ @JANSSON_LIBS@
 
-blkscan_LDADD	= ../lib/libccoin.a $(top_srcdir)/polarssl/library/libpolarssl.a \
+blkscan_LDADD	= ../lib/libccoin.a $(top_srcdir)/mbedtls/library/libpolarssl.a \
 		  @GLIB_LIBS@
 
-blkstats_LDADD	= ../lib/libccoin.a $(top_srcdir)/polarssl/library/libpolarssl.a \
+blkstats_LDADD	= ../lib/libccoin.a $(top_srcdir)/mbedtls/library/libpolarssl.a \
 		  @GLIB_LIBS@
 
-rawtx_LDADD	= ../lib/libccoin.a $(top_srcdir)/polarssl/library/libpolarssl.a \
+rawtx_LDADD	= ../lib/libccoin.a $(top_srcdir)/mbedtls/library/libpolarssl.a \
 		  @GLIB_LIBS@ @JANSSON_LIBS@

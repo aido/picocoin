@@ -1,6 +1,6 @@
 
 INCLUDES	= @GLIB_CFLAGS@ -DTEST_SRCDIR=\"$(top_srcdir)/test\" \
-		  -I$(top_srcdir)/include -I$(top_srcdir)/polarssl/include
+		  -I$(top_srcdir)/include -I$(top_srcdir)/mbedtls/include
 
 EXTRA_DIST	= \
 	base58_encode_decode.json	\
@@ -26,7 +26,7 @@ TESTS		= hex base58 fileio util keyset bloom \
 		  script-parse tx block blockfile blkdb script \
 		  tx-valid wallet-basics chain-verf
 
-COMMON_LDADD	= libtest.a ../lib/libccoin.a $(top_srcdir)/polarssl/library/libpolarssl.a \
+COMMON_LDADD	= libtest.a ../lib/libccoin.a $(top_srcdir)/mbedtls/library/libpolarssl.a \
 		  @GLIB_LIBS@ @JANSSON_LIBS@ @MATH_LIBS@
 
 base58_LDADD		= $(COMMON_LDADD)
