@@ -1,0 +1,3 @@
+
+SUBDIRS = secp256k1
+

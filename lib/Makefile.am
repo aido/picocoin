@@ -39,5 +39,6 @@ libccoin_a_SOURCES=	\
 	serialize.c	\
 	util.c		\
 	utxo.c		\
-	wallet.c
+	wallet.c    \
+	$(top_srcdir)/external/secp256k1/libsecp256k1.la
 

@@ -23,6 +23,8 @@ AC_CONFIG_SRCDIR([src/main.c])
 AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_HEADERS([picocoin-config.h])
 
+AC_CONFIG_SUBDIRS([external/secp256k1])
+
 dnl Make sure anyone changing configure.ac/Makefile.am has a clue
 AM_MAINTAINER_MODE
 
@@ -104,6 +106,7 @@ AC_CONFIG_FILES([
 	lib/Makefile
 	src/Makefile
 	test/Makefile
+	external/Makefile
 	])
 AC_OUTPUT
 
