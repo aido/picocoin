@@ -1,0 +1,4 @@
+[submodule "external/bootstrap.dat"]
+	path = external/bootstrap.dat
+	url = https://github.com/aido/bootstrap.dat.git
+	branch = 100000
