@@ -13,12 +13,11 @@ sudo: false
 
 env:
   global:
+     - secure: "W4D9Wmi+kJbxJuekKXJnhp665L2ljUuq5jrXmRqBwRDIZxbQi/mJqBEVcHEf/3W3l9W67pLd+mvV0cVv9g0AQ/nkUCSj5JCNJrePeovaQmf1QHluTa+bDUABa68X1sx201uj4EmkGJJHtYkv3Cimucut1C4g83eGXajnptKinqyLnUg9ji8aYmv7wm8n12VFeMM7+RyR53MT0nuPpCEw0hRQJQxKzXq/qw/5Wb0vBU1IovNX6bFQNMgTcHEXpppIh7efaAM50v4lj3zd5ZgLDuREmss/HriuJD3KUCWUoVgOkg+QUyW4IAIiI/dWSX9PJYtf1rKhc4ANwjq828NzyhbMJWlOBOBVAZxg+xWmc5+I+mHgmV/YylTMN4+sFnFi9gdDjmF8ImsME2qjDXm1txFknLeNP4CCEHKYCcgsNGPKUtrn2L9Be99HMScBqy7nmCQyhKvTWnYc7j/Je6PjEkXYNT96VNwZ4U8mXktkNPcYkQ43oMbUplITGiA8s50vuWQTLGjFjj+cxgAsz0rOc7+RSVxogY+MkP3+Fc28BKu1ZLLTvAmADWR+xd/179JnL+IAzM5eHUInlIp56DZF7nDoYFyt/yw3VCRUYPNOXVXzY8vCVGI+Hcr+MjmgDu7lhUeTvREaR3iJjEV3QutN79KYKr+CEeRVIoxOBigRVj4="
     - BASE_OUTDIR=$TRAVIS_BUILD_DIR/out
     - BUILD=check
     - ENABLE_COVERAGE=no
     - ENABLE_VALGRIND=no
-    - secure: "rHwlRDO/xvFHScz9rCCUYVnf6okYLuSH9HMqvZPVwI/CFb9FlUnTYfXBnI0eEK/9PVrl2Q8CLxJpdUn0P7zSwcLlI1PaLWpx0W5meM4JDtYRaI4wbwNjOg2ziM20LgzEWeFSk+XvJQMuOEuW6z7T0NZl9se2MTfBfgQZs9cCH8WmMvjN2hFNXGfoROLbHtEGPo7pc0ob7WkAxQ3aJ1fm7ehCU1V7SxxrLFVWY37xrwRMeUBPLcV/F5owtZrOZFAB6burrrUy1kZhZEcrJRMrA8oFESK4cOdnpZEY5B3db3XBW1MtgFJXh+b6TbwkRIjYDgjt6OkGqAsgguaB3NJ1UENxT/S86Q6tvWRuh7E1d56IcGrb+BLF9S8KiYgr/iPfC8hmbGdV0PbLkSXL5/+03wMTmww4MwaDKq8TkMXRvuc8cdm73jxqoQhqhDxYbOr8z1zAFeCasPukE7unb7McuF85kdX1VAEcq7K70mz292BKGOVHi55KGpGf+QlXpecsjRIV7XkArK9NI1VyZDfJpsRjzBmz5K9wp08gT/bbKYuEeaQlkOk3b4qlSYGLA3HnYD0UweSYuEvux0flQoS6QAiYmTWRe5qmEVzo22L5h9x3f2+Fv93d7hwu1UAwLe5zs83YLURdzu6OQwAnk8imzya4hk3+nqU05PVFN9b65Fk="
-    - MAKEJOBS=-j3
 
   matrix:
     - BUILD=distcheck MAKEJOBS=-j3
@@ -41,12 +40,12 @@ addons:
       - libltdl-dev
   coverity_scan:
     project:
-      name: "jgarzik/picocoin"
+      name: "aido/picocoin"
       description: "Build submitted via Travis CI"
-    notification_email: jeff@bloq.com
-    build_command_prepend: "./autogen.sh && ./configure && make -s clean"
-    build_command:   "make -s check"
-    branch_pattern: coverity_scan
+    notification_email: aido@users.noreply.github.com
+    build_command_prepend: "./autogen.sh; ./configure; make clean"
+    build_command: "make $MAKEJOBS check"
+    branch_pattern: coverity
 
 before_install:
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update && brew upgrade; fi
