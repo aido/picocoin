@@ -18,18 +18,19 @@
 #include <ccoin/util.h>                 // for ARRAY_SIZE, czstr_equal, etc
 #include "wallet.h"                     // for cur_wallet_addresses, etc
 
+#include <event2/event.h>               // for event_free, event_base_new, etc
+#include <jansson.h>                    // for json_decref, json_dumpf, etc
+#include <openssl/rand.h>               // for RAND_bytes
+
 #include <argp.h>
 #include <assert.h>                     // for assert
 #include <stdbool.h>                    // for bool
 #include <ctype.h>                      // for isspace
 #include <errno.h>                      // for errno
-#include <event2/event.h>               // for event_free, event_base_new, etc
 #include <fcntl.h>                      // for open
-#include <openssl/rand.h>               // for RAND_bytes
 #include <stdio.h>                      // for fprintf, printf, NULL, etc
 #include <stdlib.h>                     // for free, exit
 #include <string.h>                     // for strcmp, strdup, strlen, etc
-#include <jansson.h>
 
 enum command_type {
 	CMD_CHAIN_SET,
