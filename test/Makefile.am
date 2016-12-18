@@ -24,12 +24,12 @@ noinst_LIBRARIES= libtest.a
 libtest_a_SOURCES= libtest.h libtest.c
 
 noinst_PROGRAMS	= clist cstr coredefs hex hdkeys hashtab base58 fileio util \
-		  keystore keyset bloom mbr misc \
+		  crypto keystore keyset bloom mbr misc net \
 		  message parr script-parse tx block blockfile blkdb script \
 		  tx-valid wallet wallet-basics chain-verf hash ctaes aes-util
 
 TESTS		= clist cstr coredefs hex hdkeys hashtab base58 fileio util \
-		  keystore keyset bloom mbr misc \
+		  crypto keystore keyset bloom mbr misc net \
 		  message parr script-parse tx block blockfile blkdb script \
 		  tx-valid wallet wallet-basics chain-verf hash ctaes aes-util
 
@@ -48,6 +48,7 @@ cstr_LDADD		    = $(COMMON_LDADD)
 coredefs_LDADD		    = $(COMMON_LDADD)
 ctaes_LDADD         = $(COMMON_LDADD) $(top_builddir)/lib/libccoinaes.la
 aes_util_LDADD		= $(COMMON_LDADD) $(top_builddir)/lib/libccoinaes.la
+crypto_LDADD		= $(COMMON_LDADD)
 fileio_LDADD		= $(COMMON_LDADD)
 hash_LDADD		= $(COMMON_LDADD)
 hex_LDADD           = $(COMMON_LDADD)
@@ -58,6 +59,7 @@ keystore_LDADD		= $(COMMON_LDADD)
 mbr_LDADD		= $(COMMON_LDADD)
 message_LDADD		= $(COMMON_LDADD)
 misc_LDADD		= $(COMMON_LDADD)
+net_LDADD		= $(COMMON_LDADD) $(top_builddir)/lib/libccoinnet.la
 parr_LDADD		    = $(COMMON_LDADD)
 script_LDADD		= $(COMMON_LDADD)
 script_parse_LDADD	= $(COMMON_LDADD)
