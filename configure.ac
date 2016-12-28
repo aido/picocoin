@@ -76,6 +76,8 @@ AC_CHECK_LIB(event_core, event_base_new, EVENT_LIBS=-levent_core,
 AC_CHECK_LIB(jansson, json_loads, JANSSON_LIBS=-ljansson,
   [AC_MSG_ERROR([Missing required libjansson])])
 AC_CHECK_LIB(argp, argp_parse, ARGP_LIBS=-lARGP)
+AC_CHECK_LIB(lmdb, mdb_dbi_open, LMDB_LIBS=-llmdb,
+  [AC_MSG_ERROR([Missing required liblmdb])])
 
 dnl -------------------------------------
 dnl Checks for optional library functions
@@ -152,6 +154,7 @@ AC_SUBST(GMP_LIBS)
 AC_SUBST(EVENT_LIBS)
 AC_SUBST(JANSSON_LIBS)
 AC_SUBST(ARGP_LIBS)
+AC_SUBST(LMDB_LIBS)
 
 AC_CONFIG_SUBDIRS([external/secp256k1])
 AC_CONFIG_FILES([
