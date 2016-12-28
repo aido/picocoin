@@ -5,7 +5,7 @@
 #include "picocoin-config.h"           // for VERSION, _LARGE_FILES, etc
 
 #include "brd.h"
-#include <ccoin/blkdb.h>                // for blkinfo, blkdb, etc
+#include <ccoin/db/blkdb.h>             // for blkinfo, blkdb, etc
 #include <ccoin/buffer.h>               // for const_buffer, buffer_copy, etc
 #include <ccoin/clist.h>                // for clist_length
 #include <ccoin/core.h>                 // for bp_block, bp_utxo, bp_tx, etc

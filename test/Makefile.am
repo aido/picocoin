@@ -38,11 +38,11 @@ COMMON_LDADD	= libtest.a $(top_builddir)/lib/libccoin.la \
 		  @GMP_LIBS@ @JANSSON_LIBS@ @MATH_LIBS@
 
 base58_LDADD        = $(COMMON_LDADD)
-blkdb_LDADD         = $(COMMON_LDADD)
+blkdb_LDADD         = $(top_builddir)/lib/libccoindb.la $(COMMON_LDADD)
 block_LDADD         = $(COMMON_LDADD)
 blockfile_LDADD 	= $(COMMON_LDADD)
 bloom_LDADD         = $(COMMON_LDADD)
-chain_verf_LDADD	= $(COMMON_LDADD)
+chain_verf_LDADD	= $(top_builddir)/lib/libccoindb.la $(COMMON_LDADD)
 clist_LDADD         = $(COMMON_LDADD)
 cstr_LDADD		    = $(COMMON_LDADD)
 coredefs_LDADD		    = $(COMMON_LDADD)

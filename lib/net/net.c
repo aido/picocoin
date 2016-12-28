@@ -6,7 +6,7 @@
 
 #include "ccoin/net/net.h"              // for nc_conn, net_child_info, etc
 #include <ccoin/net/netbase.h>          // for bn_address_str, etc
-#include <ccoin/blkdb.h>                // for blkdb, blkdb_locator, etc
+#include <ccoin/db/blkdb.h>             // for blkdb, blkdb_locator, etc
 #include <ccoin/buffer.h>               // for buffer, const_buffer
 #include <ccoin/core.h>                 // for bp_address, bp_inv, etc
 #include <ccoin/coredefs.h>             // for ::CADDR_TIME_VERSION, etc

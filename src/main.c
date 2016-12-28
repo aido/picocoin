@@ -5,7 +5,7 @@
 #include "picocoin-config.h"            // for VERSION
 
 #include "picocoin.h"                   // for network_sync, setting
-#include <ccoin/blkdb.h>                // for blkinfo, blkdb, etc
+#include <ccoin/db/blkdb.h>                // for blkinfo, blkdb, etc
 #include <ccoin/clist.h>                // for clist, clist_free_ext, etc
 #include <ccoin/compat.h>               // for strndup
 #include <ccoin/core.h>                 // for bp_address

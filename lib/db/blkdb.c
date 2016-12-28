@@ -10,7 +10,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <string.h>
-#include <ccoin/blkdb.h>
+#include <ccoin/db/blkdb.h>
 #include <ccoin/message.h>
 #include <ccoin/serialize.h>
 #include <ccoin/buint.h>

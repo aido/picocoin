@@ -9,7 +9,7 @@
 #include <fcntl.h>
 #include <assert.h>
 #include <unistd.h>
-#include <ccoin/blkdb.h>
+#include <ccoin/db/blkdb.h>
 #include <ccoin/coredefs.h>
 #include <ccoin/buint.h>
 #include <ccoin/buffer.h>

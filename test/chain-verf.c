@@ -11,7 +11,7 @@
 #include <ccoin/coredefs.h>
 #include <ccoin/message.h>
 #include <ccoin/mbr.h>
-#include <ccoin/blkdb.h>
+#include <ccoin/db/blkdb.h>
 #include <ccoin/script.h>
 #include <ccoin/util.h>
 #include <ccoin/checkpoints.h>
