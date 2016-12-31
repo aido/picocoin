@@ -10,5 +10,8 @@ brd.blocks
 picocoin
 picocoin.peers
 picocoin.blkdb
+
 *.wallet
 
+*.mdb
+*.mdb-lock

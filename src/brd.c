@@ -6,6 +6,7 @@
 
 #include "brd.h"
 #include <ccoin/db/blkdb.h>             // for blkinfo, blkdb, etc
+#include <ccoin/db/db.h>
 #include <ccoin/buffer.h>               // for const_buffer, buffer_copy, etc
 #include <ccoin/clist.h>                // for clist_length
 #include <ccoin/core.h>                 // for bp_block, bp_utxo, bp_tx, etc
@@ -237,6 +238,13 @@ static void init_blkdb(void)
     log_debug("%s: blkdb opened", prog_name);
 }
 
+static void init_db(void)
+{
+	if (!metadb_init(chain->netmagic, &chain_genesis) || !blockdb_init()) {
+		log_info("%s: db init failed", prog_name);
+		exit(1);
+	}
+}
 static const char *genesis_bitcoin =
 "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c0101000000010000000000000000000000000000000000000000000000000000000000000000ffffffff4d04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73ffffffff0100f2052a01000000434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac00000000";
 static const char *genesis_testnet =
@@ -648,6 +656,7 @@ static void init_daemon(struct net_child_info *nci)
 {
 	init_blkdb();
 	bp_utxo_set_init(&uset);
+	init_db();
 	init_blocks();
 	init_orphans();
 	readprep_blocks_file();
@@ -679,6 +688,8 @@ static void shutdown_daemon(struct net_child_info *nci)
 		rc ? "wrote" : "failed to write",
 		bp_hashtab_size(nci->peers->map_addr),
 		clist_length(nci->peers->addrlist));
+
+	db_close();
 
 	if (log_state->logtofile) {
 		fclose(log_state->stream);

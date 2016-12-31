@@ -39,7 +39,8 @@ ccoininclude_HEADERS = \
 ccoindbincludedir=$(includedir)/ccoin/db
 
 ccoindbinclude_HEADERS = \
-    db/blkdb.h
+    db/blkdb.h  \
+    db/db.h
 
 ccoinnetincludedir=$(includedir)/ccoin/net
 
