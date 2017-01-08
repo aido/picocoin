@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <ccoin/db/blkdb.h>
+#include <ccoin/db/db.h>
 #include <ccoin/message.h>
 #include <ccoin/serialize.h>
 #include <ccoin/buint.h>
