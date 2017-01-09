@@ -4,18 +4,23 @@
  */
 #include "picocoin-config.h"
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <assert.h>
-#include <unistd.h>
-#include <ccoin/db/blkdb.h>
-#include <ccoin/coredefs.h>
-#include <ccoin/buint.h>
-#include <ccoin/buffer.h>
-#include <ccoin/util.h>
-#include <ccoin/key.h>
-#include "libtest.h"
+#include <ccoin/buffer.h>               // for const_buffer
+#include <ccoin/buint.h>                // for hex_bu256, bu256_copy, etc
+#include <ccoin/core.h>                 // for bp_block_calc_sha256, etc
+#include <ccoin/coredefs.h>             // for chain_info, chain_metadata, etc
+#include <ccoin/db/blkdb.h>             // for blkinfo, blkdb, blkdb_reorg, etc
+#include <ccoin/key.h>                  // for bp_key_static_shutdown
+#include <ccoin/log.h>                  // for logging
+#include <ccoin/util.h>                 // for file_seq_open
+
+#include <assert.h>                     // for assert
+#include <stdio.h>                      // for stderr
+#include <stdlib.h>                     // for free, calloc, NULL
+#include <unistd.h>                     // for close, read
+#include <stdbool.h>                    // for true, bool, false
+#include "libtest.h"                    // for test_filename
+
+struct logging *log_state;
 
 static void add_header(struct blkdb *db, char *raw)
 {
@@ -97,11 +102,25 @@ static void runtest(const char *ser_base_fn, const struct chain_info *chain,
 
 int main (int argc, char *argv[])
 {
+	log_state = calloc(0, sizeof(struct logging));
+
+	log_state->stream = stderr;
+	log_state->logtofile = false;
+	log_state->debug = true;
+
+	assert(metadb_init(chain_metadata[CHAIN_BITCOIN].netmagic, chain_metadata[CHAIN_BITCOIN].genesis_hash));
+	assert(blockdb_init());
+	assert(blockheightdb_init());
 	runtest("hdr193000.ser", &chain_metadata[CHAIN_BITCOIN], 193000,
 	    "000000000000059f452a5f7340de6682a977387c17010ff6e6c3bd83ca8b1317");
+
+	assert(metadb_init(chain_metadata[CHAIN_TESTNET3].netmagic, chain_metadata[CHAIN_TESTNET3].genesis_hash));
+	assert(blockdb_init());
+	assert(blockheightdb_init());
 	runtest("tn_hdr35141.ser", &chain_metadata[CHAIN_TESTNET3], 35141,
 	    "0000000000dde6ce4b9ad1e2a5be59f1b7ace6ef8d077d846263b0bfbc984f7f");
 
 	bp_key_static_shutdown();
+	free(log_state);
 	return 0;
 }

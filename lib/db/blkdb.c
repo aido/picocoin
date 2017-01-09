@@ -4,21 +4,26 @@
  */
 #include "picocoin-config.h"
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <stdbool.h>
-#include <unistd.h>
-#include <string.h>
-#include <ccoin/db/blkdb.h>
-#include <ccoin/db/db.h>
-#include <ccoin/message.h>
-#include <ccoin/serialize.h>
-#include <ccoin/buint.h>
-#include <ccoin/mbr.h>
-#include <ccoin/util.h>
-#include <ccoin/cstr.h>
-#include <ccoin/compat.h>		/* for fdatasync */
+#include <ccoin/buffer.h>               // for const_buffer
+#include <ccoin/cstr.h>                 // for cstring, cstr_free, etc
+#include <ccoin/db/blkdb.h>             // for blkinfo, blkdb, blkdb_reorg, etc
+#include <ccoin/log.h>                  // for log_debug, log_info
+#include <ccoin/mbr.h>                  // for fread_message
+#include <ccoin/message.h>              // for p2p_message, message_str, etc
+#include <ccoin/parr.h>                 // for parr
+#include <ccoin/serialize.h>            // for deser_u256, ser_u256, etc
+#include <ccoin/util.h>                 // for file_seq_open
+#include <ccoin/compat.h>               // for fdatasync
+
+#include <gmp.h>                        // for mpz_clear, mpz_init, etc
+
+#include <stddef.h>                     // for size_t
+#include <stdlib.h>                     // for free, calloc
+#include <string.h>                     // for memset, memcpy, strncmp, etc
+#include <unistd.h>                     // for close, fdatasync, write, etc
+
+
+struct logging *log_state;
 
 struct blkinfo *bi_new(void)
 {
@@ -73,6 +78,7 @@ static bool blkdb_connect(struct blkdb *db, struct blkinfo *bi,
 		return false;
 
 	bool rc = false;
+	char hexstr[BU256_STRSZ];
 	mpz_t cur_work;
 	mpz_init(cur_work);
 
@@ -110,6 +116,7 @@ static bool blkdb_connect(struct blkdb *db, struct blkinfo *bi,
 
 	/* add to block map */
 	bp_hashtab_put(db->blocks, &bi->hash, bi);
+	blockheightdb_add(bi->height, &bi->hash);
 
 	/* if new best chain found, update pointers */
 	if (best_chain) {
@@ -150,9 +157,13 @@ static bool blkdb_connect(struct blkdb *db, struct blkinfo *bi,
 
 		/* reorg analyzed. update database's best-chain pointer */
 		db->best_chain = bi;
-	}
 
+		bu256_hex(hexstr, &db->best_chain->hdr.sha256);
+		log_info("blkdb: New best = %s Height = %i",hexstr, bi->height);
+	}
 	rc = true;
+	bu256_hex(hexstr, &bi->hdr.sha256);
+	log_debug("blkdb: Adding block %s to blkdb successful", hexstr);
 
 out:
 	mpz_clear(cur_work);

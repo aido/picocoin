@@ -1,5 +1,5 @@
 if ENABLE_VALGRIND
-    TESTS_ENVIRONMENT=$(LIBTOOL) --mode=execute valgrind --leak-check=full \
+    TESTS_ENVIRONMENT = $(LIBTOOL) --mode=execute valgrind --leak-check=full \
                         --leak-resolution=high --num-callers=40 \
                         --error-exitcode=1
 endif
@@ -19,30 +19,29 @@ EXTRA_DIST	= \
 	tn_blk35133.ser wallet-basics.json \
 	script_tests.json tx_valid.json tx_invalid.json
 
-noinst_LIBRARIES= libtest.a
+noinst_LIBRARIES = libtest.a
 
-libtest_a_SOURCES= libtest.h libtest.c chisq.c randtest.c
+libtest_a_SOURCES = libtest.h libtest.c chisq.c randtest.c
 
-noinst_PROGRAMS	= clist cstr coredefs hex hdkeys hashtab base58 fileio util \
+check_PROGRAMS = clist cstr coredefs hex hdkeys hashtab base58 fileio util \
 		  crypto keystore keyset bloom mbr misc net \
 		  message parr prng script-parse tx block blockfile blkdb script \
 		  tx-valid wallet wallet-basics chain-verf hash ctaes aes-util
 
-TESTS		= clist cstr coredefs hex hdkeys hashtab base58 fileio util \
-		  crypto keystore keyset bloom mbr misc net \
-		  message parr prng script-parse tx block blockfile blkdb script \
-		  tx-valid wallet wallet-basics chain-verf hash ctaes aes-util
+TESTS		= $(check_PROGRAMS)
+
+CLEANFILES  = *.mdb *.mdb-lock
 
 COMMON_LDADD	= libtest.a $(top_builddir)/lib/libccoin.la \
 		  $(top_builddir)/external/secp256k1/libsecp256k1.la \
 		  @GMP_LIBS@ @JANSSON_LIBS@ @MATH_LIBS@
 
 base58_LDADD        = $(COMMON_LDADD)
-blkdb_LDADD         = $(top_builddir)/lib/libccoindb.la $(COMMON_LDADD)
+blkdb_LDADD         = $(top_builddir)/lib/libccoindb.la @LMDB_LIBS@ $(COMMON_LDADD)
 block_LDADD         = $(COMMON_LDADD)
 blockfile_LDADD 	= $(COMMON_LDADD)
 bloom_LDADD         = $(COMMON_LDADD)
-chain_verf_LDADD	= $(top_builddir)/lib/libccoindb.la $(COMMON_LDADD)
+chain_verf_LDADD	= $(top_builddir)/lib/libccoindb.la @LMDB_LIBS@ $(COMMON_LDADD)
 clist_LDADD         = $(COMMON_LDADD)
 cstr_LDADD		    = $(COMMON_LDADD)
 coredefs_LDADD		    = $(COMMON_LDADD)
