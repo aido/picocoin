@@ -15,13 +15,13 @@ EXTRA_DIST	= \
 	blk0.json  blk120383.json  tx3e0dc3da.json \
 	blk0.ser  blk120383.ser  tx3e0dc3da.ser \
 	blks10.ser \
-	hdr193000.ser tn_hdr35141.ser \
+	hdr50000.ser tn_hdr25000.ser \
 	tn_blk35133.ser wallet-basics.json \
 	script_tests.json tx_valid.json tx_invalid.json
 
-noinst_LIBRARIES = libtest.a
+noinst_LTLIBRARIES = libtest.la
 
-libtest_a_SOURCES = libtest.h libtest.c chisq.c randtest.c
+libtest_la_SOURCES = libtest.h libtest.c chisq.c randtest.c
 
 check_PROGRAMS = clist cstr coredefs hex hdkeys hashtab base58 fileio util \
 		  crypto keystore keyset bloom mbr misc net \
@@ -32,7 +32,7 @@ TESTS		= $(check_PROGRAMS)
 
 CLEANFILES  = *.mdb *.mdb-lock
 
-COMMON_LDADD	= libtest.a $(top_builddir)/lib/libccoin.la \
+COMMON_LDADD	= libtest.la $(top_builddir)/lib/libccoin.la \
 		  $(top_builddir)/external/secp256k1/libsecp256k1.la \
 		  @GMP_LIBS@ @JANSSON_LIBS@ @MATH_LIBS@
 

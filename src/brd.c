@@ -394,7 +394,6 @@ static bool block_process(const struct bp_block *block)
 	/* if best chain, mark TX's as spent */
 	if (bu256_equal(&db.best_chain->hash, &bi->hdr.sha256)) {
 		if (!spend_block(&uset, block, bi->height)) {
-			char hexstr[BU256_STRSZ];
 			bu256_hex(hexstr, &bi->hdr.sha256);
 			log_info("%s: block spend fail %u %s",
 				prog_name,

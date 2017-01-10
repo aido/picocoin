@@ -9,6 +9,7 @@
 #include <ccoin/core.h>                 // for bp_block_calc_sha256, etc
 #include <ccoin/coredefs.h>             // for chain_info, chain_metadata, etc
 #include <ccoin/db/blkdb.h>             // for blkinfo, blkdb, blkdb_reorg, etc
+#include <ccoin/db/db.h>                // for blockdb_init, etc
 #include <ccoin/key.h>                  // for bp_key_static_shutdown
 #include <ccoin/log.h>                  // for logging
 #include <ccoin/util.h>                 // for file_seq_open
@@ -108,17 +109,17 @@ int main (int argc, char *argv[])
 	log_state->logtofile = false;
 	log_state->debug = true;
 
-	assert(metadb_init(chain_metadata[CHAIN_BITCOIN].netmagic, chain_metadata[CHAIN_BITCOIN].genesis_hash));
+	assert(metadb_init(chain_metadata[CHAIN_BITCOIN].netmagic, (const bu256_t *)chain_metadata[CHAIN_BITCOIN].genesis_hash));
 	assert(blockdb_init());
 	assert(blockheightdb_init());
-	runtest("hdr193000.ser", &chain_metadata[CHAIN_BITCOIN], 193000,
-	    "000000000000059f452a5f7340de6682a977387c17010ff6e6c3bd83ca8b1317");
+	runtest("hdr50000.ser", &chain_metadata[CHAIN_BITCOIN], 50000,
+	    "000000001aeae195809d120b5d66a39c83eb48792e068f8ea1fea19d84a4278a");
 
-	assert(metadb_init(chain_metadata[CHAIN_TESTNET3].netmagic, chain_metadata[CHAIN_TESTNET3].genesis_hash));
+	assert(metadb_init(chain_metadata[CHAIN_TESTNET3].netmagic, (const bu256_t *)chain_metadata[CHAIN_TESTNET3].genesis_hash));
 	assert(blockdb_init());
 	assert(blockheightdb_init());
-	runtest("tn_hdr35141.ser", &chain_metadata[CHAIN_TESTNET3], 35141,
-	    "0000000000dde6ce4b9ad1e2a5be59f1b7ace6ef8d077d846263b0bfbc984f7f");
+	runtest("tn_hdr25000.ser", &chain_metadata[CHAIN_TESTNET3], 25000,
+	    "0000000022b23de294af24d922fb3f1ed21521a8b3bd7716861dcb5310b1b525");
 
 	bp_key_static_shutdown();
 	free(log_state);

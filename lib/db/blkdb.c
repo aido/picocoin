@@ -7,6 +7,7 @@
 #include <ccoin/buffer.h>               // for const_buffer
 #include <ccoin/cstr.h>                 // for cstring, cstr_free, etc
 #include <ccoin/db/blkdb.h>             // for blkinfo, blkdb, blkdb_reorg, etc
+#include <ccoin/db/db.h>                // for blockheightdb_add
 #include <ccoin/log.h>                  // for log_debug, log_info
 #include <ccoin/mbr.h>                  // for fread_message
 #include <ccoin/message.h>              // for p2p_message, message_str, etc
