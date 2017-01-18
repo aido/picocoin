@@ -56,7 +56,7 @@ libccoin_la_SOURCES=	\
 noinst_LTLIBRARIES= libccoindb.la libccoinnet.la libccoinaes.la
 
 libccoindb_la_SOURCES=	\
-	db/blkdb.c  \
+	db/chaindb.c  \
 	db/db.c
 
 libccoinnet_la_SOURCES=	\

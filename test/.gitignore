@@ -6,7 +6,7 @@ base58
 block
 blockfile
 bloom
-blkdb
+chaindb
 chain-verf
 clist
 cstr

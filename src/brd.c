@@ -5,7 +5,7 @@
 #include "picocoin-config.h"           // for VERSION, _LARGE_FILES, etc
 
 #include "brd.h"
-#include <ccoin/db/blkdb.h>             // for blkinfo, blkdb, etc
+#include <ccoin/db/chaindb.h>           // for blkinfo, chaindb, etc
 #include <ccoin/db/db.h>                // for blockdb_add, blockdb_init, etc
 #include <ccoin/buffer.h>               // for const_buffer, buffer_copy, etc
 #include <ccoin/clist.h>                // for clist_length
@@ -50,7 +50,7 @@ uint64_t instance_nonce;
 struct logging *log_state;
 bool debugging = false;
 
-static struct blkdb db;
+static struct chaindb db;
 static struct bp_hashtab *orphans;
 static struct bp_utxo_set uset;
 static bool script_verf = false;
@@ -61,7 +61,6 @@ static const char *const_settings[] = {
 	"net.connect.timeout=11",
 	"chain=bitcoin",
 	"peers=brd.peers",
-	/* "blkdb=brd.blkdb", */
 	"log=-", /* "log=brd.log", */
 };
 
@@ -202,33 +201,16 @@ static void init_log(void)
 
 }
 
-static void init_blkdb(void)
+static void init_chaindb(void)
 {
 	char hexstr[BU256_STRSZ];
 
-	if (!blkdb_init(&db, chain->netmagic, &chain_genesis)) {
-		log_info("%s: blkdb init failed", prog_name);
+	if (!chaindb_init(&db, chain->netmagic, &chain_genesis)) {
+		log_info("%s: chaindb initialisation failed", prog_name);
 		exit(1);
 	}
 
-	char *blkdb_fn = setting("blkdb");
-	if (!blkdb_fn)
-		return;
-
-	if ((access(blkdb_fn, F_OK) == 0) &&
-	    !blkdb_read(&db, blkdb_fn)) {
-		log_info("%s: blkdb read failed", prog_name);
-		exit(1);
-	}
-
-	db.fd = open(blkdb_fn,
-		     O_WRONLY | O_APPEND | O_CREAT | O_LARGEFILE, 0666);
-	if (db.fd < 0) {
-		log_error("%s: blkdb file open failed: %s", prog_name, strerror(errno));
-		exit(1);
-	}
-
-    log_debug("%s: blkdb opened", prog_name);
+    log_debug("%s: Initialised chaindb", prog_name);
 }
 
 static void init_db(void)
@@ -237,7 +219,7 @@ static void init_db(void)
 		!blockdb_init() ||
 		!blockheightdb_init())
 		{
-		log_error("%s: db init failed", prog_name);
+		log_error("%s: db initialisation failed", prog_name);
 		exit(1);
 	}
 
@@ -376,14 +358,13 @@ static bool block_process(const struct bp_block *block)
 	struct blkinfo *bi = bi_new();
 	bu256_copy(&bi->hash, &block->sha256);
 	bp_block_copy_hdr(&bi->hdr, block);
-	bi->n_file = 0;
 	char hexstr[BU256_STRSZ];
 	bu256_hex(hexstr, &bi->hash);
 
-	struct blkdb_reorg reorg;
+	struct chaindb_reorg reorg;
 
-	if (!blkdb_add(&db, bi, &reorg)) {
-		log_debug("%s: Adding block %s to blkdb failed", prog_name, hexstr);
+	if (!chaindb_add(&db, bi, &reorg)) {
+		log_debug("%s: Adding block %s to chaindb failed", prog_name, hexstr);
 		goto err_out;
 	}
 
@@ -398,7 +379,7 @@ static bool block_process(const struct bp_block *block)
 			log_info("%s: block spend fail %u %s",
 				prog_name,
 				bi->height, hexstr);
-			/* FIXME: bad record is now in blkdb */
+			/* FIXME: bad record is now in chaindb */
 			goto err_out;
 		}
 	}
@@ -506,14 +487,14 @@ static void init_peers(struct net_child_info *nci)
 
 static bool inv_block_process(bu256_t *hash)
 {
-    return (!blkdb_lookup(&db, hash) &&
+    return (!chaindb_lookup(&db, hash) &&
 			    !have_orphan(hash));
 }
 
 static bool add_block(struct bp_block *block, struct const_buffer *buf)
 {
     /* check for duplicate block */
-    if (blkdb_lookup(&db, &block->sha256) ||
+    if (chaindb_lookup(&db, &block->sha256) ||
         have_orphan(&block->sha256))
         return true;
 
@@ -545,12 +526,11 @@ static void init_nci(struct net_child_info *nci)
 
 static void init_daemon(struct net_child_info *nci)
 {
-	init_blkdb();
+	init_chaindb();
 	bp_utxo_set_init(&uset);
 	init_block0();
 	init_orphans();
-	if (db.fd < 0)
-		blockheightdb_getall(read_block);
+	blockheightdb_getall(read_block);
 	init_nci(nci);
 }
 
@@ -592,7 +572,7 @@ static void shutdown_daemon(struct net_child_info *nci)
 		shutdown_nci(nci);
 		bp_hashtab_unref(orphans);
 		bp_hashtab_unref(settings);
-		blkdb_free(&db);
+		chaindb_free(&db);
 		bp_utxo_set_free(&uset);
 	}
 }

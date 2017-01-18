@@ -8,7 +8,6 @@ brd.peers
 
 picocoin
 picocoin.peers
-picocoin.blkdb
 
 *.wallet
 

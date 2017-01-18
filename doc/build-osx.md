@@ -61,7 +61,6 @@ You should see output formatted in JSON,
       "chain": "bitcoin",
       "net.connect.timeout": "11",
       "peers": "picocoin.peers",
-      "blkdb": "picocoin.blkdb"
     }
 
 If that works, `picocoin` is ready for use.

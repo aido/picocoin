@@ -82,7 +82,7 @@ AC_CHECK_LIB(lmdb, mdb_dbi_open, LMDB_LIBS=-llmdb,
 dnl -------------------------------------
 dnl Checks for optional library functions
 dnl -------------------------------------
-AC_CHECK_FUNCS(fdatasync memmem strndup mkstemp)
+AC_CHECK_FUNCS(memmem strndup mkstemp)
 
 dnl -----------------
 dnl Configure options

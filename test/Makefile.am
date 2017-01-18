@@ -25,7 +25,7 @@ libtest_la_SOURCES = libtest.h libtest.c chisq.c randtest.c
 
 check_PROGRAMS = clist cstr coredefs hex hdkeys hashtab base58 fileio util \
 		  crypto keystore keyset bloom mbr misc net \
-		  message parr prng script-parse tx block blockfile blkdb script \
+		  message parr prng script-parse tx block blockfile chaindb script \
 		  tx-valid wallet wallet-basics chain-verf hash ctaes aes-util
 
 TESTS		= $(check_PROGRAMS)
@@ -37,10 +37,10 @@ COMMON_LDADD	= libtest.la $(top_builddir)/lib/libccoin.la \
 		  @GMP_LIBS@ @JANSSON_LIBS@ @MATH_LIBS@
 
 base58_LDADD        = $(COMMON_LDADD)
-blkdb_LDADD         = $(top_builddir)/lib/libccoindb.la @LMDB_LIBS@ $(COMMON_LDADD)
 block_LDADD         = $(COMMON_LDADD)
 blockfile_LDADD 	= $(COMMON_LDADD)
 bloom_LDADD         = $(COMMON_LDADD)
+chaindb_LDADD       = $(top_builddir)/lib/libccoindb.la @LMDB_LIBS@ $(COMMON_LDADD)
 chain_verf_LDADD	= $(top_builddir)/lib/libccoindb.la @LMDB_LIBS@ $(COMMON_LDADD)
 clist_LDADD         = $(COMMON_LDADD)
 cstr_LDADD		    = $(COMMON_LDADD)
