@@ -50,6 +50,7 @@ uint64_t instance_nonce;
 struct logging *log_state;
 bool debugging = false;
 
+static char *peer_filename = NULL;
 static struct chaindb db;
 static struct bp_hashtab *orphans;
 static struct bp_utxo_set uset;
@@ -60,7 +61,6 @@ struct net_child_info global_nci;
 static const char *const_settings[] = {
 	"net.connect.timeout=11",
 	"chain=bitcoin",
-	"peers=brd.peers",
 	"log=-", /* "log=brd.log", */
 };
 
@@ -460,12 +460,12 @@ static void init_peers(struct net_child_info *nci)
 	 */
 	struct peer_manager *peers;
 
-	peers = peerman_read(setting("peers"));
+	peers = peerman_read(peer_filename);
 	if (!peers) {
 		log_info("%s: initializing empty peer list", prog_name);
 
 		peers = peerman_seed(setting("no_dns") == NULL ? true : false);
-		if (!peerman_write(peers, setting("peers"), chain)) {
+		if (!peerman_write(peers, peer_filename, chain)) {
 			log_info("%s: failed to write peer list", prog_name);
 			exit(1);
 		}
@@ -554,7 +554,7 @@ static void shutdown_nci(struct net_child_info *nci)
 
 static void shutdown_daemon(struct net_child_info *nci)
 {
-	bool rc = peerman_write(nci->peers, setting("peers"), chain);
+	bool rc = peerman_write(nci->peers, peer_filename, chain);
 	log_info("%s: %s %u/%zu peers", prog_name,
 		rc ? "wrote" : "failed to write",
 		bp_hashtab_size(nci->peers->map_addr),
@@ -605,6 +605,10 @@ int main (int argc, char *argv[])
 
 	init_log();
 	chain_set();
+
+	char peer_filename_tmp[strlen(chain->name) + 6 + 1];
+	snprintf(peer_filename_tmp, sizeof(peer_filename_tmp), "%s.peers", chain->name);
+	peer_filename = peer_filename_tmp;
 
 	/*
 	 * properly capture TERM and other signals
