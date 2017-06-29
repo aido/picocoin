@@ -52,8 +52,7 @@ enum
     SCRIPT_VERIFY_STRICTENC = (1U << 1),
     SCRIPT_VERIFY_DERSIG    = (1U << 2),
     SCRIPT_VERIFY_LOW_S     = (1U << 3),
-    // TODO : SCRIPT_VERIFY_NULLDUMMY
-//    SCRIPT_VERIFY_NULLDUMMY = (1U << 4),
+    SCRIPT_VERIFY_NULLDUMMY = (1U << 4),
     SCRIPT_VERIFY_SIGPUSHONLY = (1U << 5),
     SCRIPT_VERIFY_MINIMALDATA = (1U << 6),
     SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS = (1U << 7),
@@ -258,7 +257,7 @@ extern bool is_bsp_multisig(parr *ops);
 
 static inline bool is_bsp_pushdata(enum opcodetype op)
 {
-	return (op <= OP_PUSHDATA4);
+	return (op <= OP_16);
 }
 
 static inline bool is_bsp_p2sh(struct const_buffer *buf)

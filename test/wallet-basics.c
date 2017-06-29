@@ -3,7 +3,6 @@
 
 #include <assert.h>
 #include <jansson.h>
-#include <openssl/err.h>
 #include <ccoin/core.h>
 #include <ccoin/util.h>
 #include <ccoin/parr.h>
@@ -160,11 +159,10 @@ static void runtest(const char *json_base_fn, const char *ser_in_fn,
 
 int main (int argc, char *argv[])
 {
-	runtest("wallet-basics.json", "tn_blk35133.ser",
+	runtest("data/wallet-basics.json", "data/tn_blk35133.ser",
 	    "00000000003bf8f8f24e0c5f592a38bb7c18352745ef7192f1a576d855fd6b2d",
 	    "bf1938abc33cc0b4cde7d94002412b17e35e3c657689e1be7ff588f3fda8d463");
 
-	ERR_remove_state(0);
 	bp_key_static_shutdown();
 
 	return 0;

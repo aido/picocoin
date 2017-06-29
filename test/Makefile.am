@@ -4,38 +4,29 @@ if ENABLE_VALGRIND
                         --error-exitcode=1
 endif
 
+SUBDIRS		= data
+
 AM_CPPFLAGS	= -DTEST_SRCDIR=\"$(top_srcdir)/test\" \
 		  -I$(top_srcdir)/include \
 		  -I$(top_srcdir)/external/secp256k1/include
 
-EXTRA_DIST	= \
-	base58_encode_decode.json	\
-	base58_keys_valid.json		\
-	random.data			\
-	blk0.json  blk120383.json  tx3e0dc3da.json \
-	blk0.ser  blk120383.ser  tx3e0dc3da.ser \
-	blks10.ser \
-	hdr193000.ser tn_hdr35141.ser \
-	tn_blk35133.ser wallet-basics.json \
-	script_tests.json tx_valid.json tx_invalid.json
-
 noinst_LIBRARIES= libtest.a
 
-libtest_a_SOURCES= libtest.h libtest.c
+libtest_a_SOURCES= libtest.h libtest.c chisq.c randtest.c
 
 noinst_PROGRAMS	= clist cstr coredefs hex hdkeys hashtab base58 fileio util \
-		  crypto keystore keyset bloom mbr misc net \
-		  message parr script-parse tx block blockfile blkdb script \
+		  crypto keystore keyset bloom mbr misc net sighash \
+		  message parr prng script-parse tx block blockfile blkdb script \
 		  tx-valid wallet wallet-basics chain-verf hash ctaes aes-util
 
 TESTS		= clist cstr coredefs hex hdkeys hashtab base58 fileio util \
-		  crypto keystore keyset bloom mbr misc net \
-		  message parr script-parse tx block blockfile blkdb script \
+		  crypto keystore keyset bloom mbr misc net sighash \
+		  message parr prng script-parse tx block blockfile blkdb script \
 		  tx-valid wallet wallet-basics chain-verf hash ctaes aes-util
 
 COMMON_LDADD	= libtest.a $(top_builddir)/lib/libccoin.la \
 		  $(top_builddir)/external/secp256k1/libsecp256k1.la \
-		  @CRYPTO_LIBS@ @GMP_LIBS@ @JANSSON_LIBS@ @MATH_LIBS@
+		  @GMP_LIBS@ @JANSSON_LIBS@ @MATH_LIBS@
 
 base58_LDADD        = $(COMMON_LDADD)
 blkdb_LDADD         = $(COMMON_LDADD)
@@ -61,9 +52,11 @@ message_LDADD		= $(COMMON_LDADD)
 misc_LDADD		= $(COMMON_LDADD)
 net_LDADD		= $(COMMON_LDADD) $(top_builddir)/lib/libccoinnet.la
 parr_LDADD		    = $(COMMON_LDADD)
+prng_LDADD		    = $(COMMON_LDADD)
 script_LDADD		= $(COMMON_LDADD)
 script_parse_LDADD	= $(COMMON_LDADD)
-tx_LDADD            = $(COMMON_LDADD)
+sighash_LDADD		= $(COMMON_LDADD)
+tx_LDADD		= $(COMMON_LDADD)
 tx_valid_LDADD		= $(COMMON_LDADD)
 util_LDADD		    = $(COMMON_LDADD) $(top_builddir)/lib/libccoinnet.la
 wallet_LDADD		= $(COMMON_LDADD) $(top_builddir)/lib/libccoinwallet.la

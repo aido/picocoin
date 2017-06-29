@@ -11,29 +11,81 @@
 #include <ccoin/core.h>
 #include "libtest.h"
 
-static void test_script(bool is_valid,cstring *scriptSig, cstring *scriptPubKey,
-			unsigned int idx, const char *scriptSigEnc,
-			const char *scriptPubKeyEnc,
-			const unsigned int test_flags)
+struct bp_tx BuildCreditingTransaction(struct cstring *scriptPubKey)
 {
-	struct bp_tx tx;
+    struct bp_tx txCredit;
+    bp_tx_init(&txCredit);
+    txCredit.nVersion = 1;
+    txCredit.nLockTime = 0;
+    txCredit.vin = parr_new(0, bp_txin_freep);
+    txCredit.vout = parr_new(0, bp_txout_freep);
 
-	bp_tx_init(&tx);
+    struct bp_txin* txinCredit = calloc(1, sizeof(struct bp_txin));
+    bp_txin_init(txinCredit);
+    txinCredit->prevout.n = (uint32_t)-1;
+    bu256_set_u64(&txinCredit->prevout.hash, 0);
+    txinCredit->scriptSig = cstr_new(NULL);
+    cstr_append_c(txinCredit->scriptSig, 0);
+    cstr_append_c(txinCredit->scriptSig, 0);
+    txinCredit->nSequence = SEQUENCE_FINAL;
+    parr_add(txCredit.vin, txinCredit);
 
-	bool rc;
-	rc = bp_script_verify(scriptSig, scriptPubKey, &tx, 0,
-			      test_flags, SIGHASH_NONE);
+    struct bp_txout *txoutCredit = calloc(1, sizeof(struct bp_txout));
+    bp_txout_init(txoutCredit);
+    txoutCredit->scriptPubKey = cstr_new_buf(scriptPubKey->str, scriptPubKey->len);
+    txoutCredit->nValue = (uint64_t) 0;
+    parr_add(txCredit.vout, txoutCredit);
+    bp_tx_calc_sha256(&txCredit);
 
-	if (rc != is_valid) {
-		fprintf(stderr,
-			"script: %sis_valid test %u failed\n"
-			"script: [\"%s\", \"%s\"]\n",
-			is_valid ? "" : "!",
-			idx, scriptSigEnc, scriptPubKeyEnc);
-		assert(rc == is_valid);
-	}
+    return txCredit;
+}
 
-	bp_tx_free(&tx);
+struct bp_tx BuildSpendingTransaction(struct cstring* scriptSig, struct bp_tx* txCredit)
+{
+    struct bp_tx txSpend;
+    bp_tx_init(&txSpend);
+    txSpend.nVersion = 1;
+    txSpend.nLockTime = 0;
+    txSpend.vin = parr_new(0, bp_txin_freep);
+    txSpend.vout = parr_new(0, bp_txout_freep);
+
+    struct bp_txin* txinSpend = calloc(1, sizeof(struct bp_txin));
+    bp_txin_init(txinSpend);
+    bu256_copy(&txinSpend->prevout.hash, &txCredit->sha256);
+    txinSpend->prevout.n = 0;
+    txinSpend->scriptSig = cstr_new_buf(scriptSig->str, scriptSig->len);
+    txinSpend->nSequence = SEQUENCE_FINAL;
+    parr_add(txSpend.vin, txinSpend);
+
+    struct bp_txout *txoutSpend = calloc(1, sizeof(struct bp_txout));
+    bp_txout_init(txoutSpend);
+    txoutSpend->scriptPubKey = cstr_new(NULL); //
+    txoutSpend->nValue =(uint64_t) 0;
+    parr_add(txSpend.vout, txoutSpend);
+
+    bp_tx_free(txCredit);
+    return txSpend;
+}
+
+static void test_script(bool is_valid, cstring* scriptSig,
+                        cstring* scriptPubKey, unsigned int idx,
+                        const char* scriptSigEnc, const char* scriptPubKeyEnc,
+                        const unsigned int test_flags)
+{
+    struct bp_tx tx = BuildCreditingTransaction(scriptPubKey);
+    tx = BuildSpendingTransaction(scriptSig, &tx);
+
+    bool rc;
+    rc = bp_script_verify(scriptSig, scriptPubKey, &tx, 0, test_flags, SIGHASH_NONE);
+
+    if (rc != is_valid) {
+        fprintf(stderr, "script: %sis_valid test %u failed\n"
+                        "script: [\"%s\", \"%s\"]\n",
+            is_valid ? "" : "!", idx, scriptSigEnc, scriptPubKeyEnc);
+        assert(rc == is_valid);
+    }
+
+    bp_tx_free(&tx);
 }
 
 static void runtest(const char *basefn)
@@ -79,6 +131,8 @@ static void runtest(const char *basefn)
 						verify_flags |= SCRIPT_VERIFY_DERSIG;
 					else if (strcmp(json_flag, "LOW_S") == 0)
 						verify_flags |= SCRIPT_VERIFY_LOW_S;
+					else if (strcmp(json_flag, "NULLDUMMY") == 0)
+						verify_flags |= SCRIPT_VERIFY_NULLDUMMY;
 					else if (strcmp(json_flag, "SIGPUSHONLY") == 0)
 						verify_flags |= SCRIPT_VERIFY_SIGPUSHONLY;
 					else if (strcmp(json_flag, "MINIMALDATA") == 0)
@@ -111,6 +165,6 @@ static void runtest(const char *basefn)
 
 int main (int argc, char *argv[])
 {
-	runtest("script_tests.json");
-	return 0;
+    runtest("data/script_tests.json");
+    return 0;
 }
