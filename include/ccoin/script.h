@@ -41,6 +41,7 @@ enum
 	SIGHASH_ALL = 1,
 	SIGHASH_NONE = 2,
 	SIGHASH_SINGLE = 3,
+	SIGHASH_FORKID_UAHF = 0x40,
 	SIGHASH_ANYONECANPAY = 0x80,
 };
 
@@ -298,9 +299,32 @@ extern bool bp_verify_sig(const struct bp_utxo *txFrom, const struct bp_tx *txTo
 extern bool bp_script_sign(struct bp_keystore *ks, const cstring *fromPubKey,
 		    const struct bp_tx *txTo, unsigned int nIn,
 		    int nHashType);
+
 extern bool bp_sign_sig(struct bp_keystore *ks, const struct bp_utxo *txFrom,
 		 struct bp_tx *txTo, unsigned int nIn,
 		 unsigned int flags, int nHashType);
+
+extern void bp_tx_sighash_with_value(bu256_t *hash, const cstring *scriptCode,
+		   const struct bp_tx *txTo, unsigned int nIn,
+		   int nHashType, int64_t value);
+
+extern bool bp_script_sign_with_value(struct bp_keystore *ks, const cstring *fromPubKey,
+		    const struct bp_tx *txTo, unsigned int nIn,
+		    int nHashType, int64_t value);
+
+
+/**
+ * uahf related
+ */
+
+void uahf_bp_tx_sighash(bu256_t *hash, const cstring *scriptCode,
+		   const struct bp_tx *txTo, unsigned int nIn,
+		   int nHashType, int64_t value);
+
+extern bool uahf_bp_script_sign(struct bp_keystore *ks, const cstring *fromPubKey,
+		    const struct bp_tx *txTo, unsigned int nIn,
+		    int nHashType, int64_t value);
+
 
 /*
  * script building
