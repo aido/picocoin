@@ -111,13 +111,13 @@ int main (int argc, char *argv[])
 	assert(metadb_init(chain_metadata[CHAIN_BITCOIN].netmagic, (const bu256_t *)chain_metadata[CHAIN_BITCOIN].genesis_hash));
 	assert(blockdb_init());
 	assert(blockheightdb_init());
-	runtest("hdr50000.ser", &chain_metadata[CHAIN_BITCOIN], 50000,
+	runtest("data/hdr50000.ser", &chain_metadata[CHAIN_BITCOIN], 50000,
 	    "000000001aeae195809d120b5d66a39c83eb48792e068f8ea1fea19d84a4278a");
 
 	assert(metadb_init(chain_metadata[CHAIN_TESTNET3].netmagic, (const bu256_t *)chain_metadata[CHAIN_TESTNET3].genesis_hash));
 	assert(blockdb_init());
 	assert(blockheightdb_init());
-	runtest("tn_hdr25000.ser", &chain_metadata[CHAIN_TESTNET3], 25000,
+	runtest("data/tn_hdr25000.ser", &chain_metadata[CHAIN_TESTNET3], 25000,
 	    "0000000022b23de294af24d922fb3f1ed21521a8b3bd7716861dcb5310b1b525");
 
 	bp_key_static_shutdown();

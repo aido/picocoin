@@ -4,35 +4,29 @@ if ENABLE_VALGRIND
                         --error-exitcode=1
 endif
 
+SUBDIRS		= data
+
 AM_CPPFLAGS	= -DTEST_SRCDIR=\"$(top_srcdir)/test\" \
 		  -I$(top_srcdir)/include \
 		  -I$(top_srcdir)/external/secp256k1/include
 
-EXTRA_DIST	= \
-	base58_encode_decode.json	\
-	base58_keys_valid.json		\
-	random.data			\
-	blk0.json  blk120383.json  tx3e0dc3da.json \
-	blk0.ser  blk120383.ser  tx3e0dc3da.ser \
-	blks10.ser \
-	hdr50000.ser tn_hdr25000.ser \
-	tn_blk35133.ser wallet-basics.json \
-	script_tests.json tx_valid.json tx_invalid.json
+noinst_LIBRARIES= libtest.a
 
-noinst_LTLIBRARIES = libtest.la
+libtest_a_SOURCES = libtest.h libtest.c chisq.c randtest.c
 
-libtest_la_SOURCES = libtest.h libtest.c chisq.c randtest.c
-
-check_PROGRAMS = clist cstr coredefs hex hdkeys hashtab base58 fileio util \
-		  crypto keystore keyset bloom mbr misc net \
+noinst_PROGRAMS	= clist cstr coredefs hex hdkeys hashtab base58 fileio util \
+		  crypto keystore keyset bloom mbr misc net sighash \
 		  message parr prng script-parse tx block blockfile chaindb script \
 		  tx-valid wallet wallet-basics chain-verf hash ctaes aes-util
 
-TESTS		= $(check_PROGRAMS)
+TESTS		= clist cstr coredefs hex hdkeys hashtab base58 fileio util \
+		  crypto keystore keyset bloom mbr misc net sighash \
+		  message parr prng script-parse tx block blockfile chaindb script \
+		  tx-valid wallet wallet-basics chain-verf hash ctaes aes-util
 
 CLEANFILES  = *.mdb *.mdb-lock
 
-COMMON_LDADD	= libtest.la $(top_builddir)/lib/libccoin.la \
+COMMON_LDADD	= libtest.a $(top_builddir)/lib/libccoin.la \
 		  $(top_builddir)/external/secp256k1/libsecp256k1.la \
 		  @GMP_LIBS@ @JANSSON_LIBS@ @MATH_LIBS@
 
@@ -63,7 +57,8 @@ parr_LDADD		    = $(COMMON_LDADD)
 prng_LDADD		    = $(COMMON_LDADD)
 script_LDADD		= $(COMMON_LDADD)
 script_parse_LDADD	= $(COMMON_LDADD)
-tx_LDADD            = $(COMMON_LDADD)
+sighash_LDADD		= $(COMMON_LDADD)
+tx_LDADD		= $(COMMON_LDADD)
 tx_valid_LDADD		= $(COMMON_LDADD)
 util_LDADD		    = $(COMMON_LDADD) $(top_builddir)/lib/libccoinnet.la
 wallet_LDADD		= $(COMMON_LDADD)
